@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '3070:3070'
+    restart: unless-stopped
+    # Add any environment variables your backend needs
+    # environment:
+    #   - NODE_ENV=production
+    #   - DATABASE_URL=your_database_url
+    # Add volumes if you need to persist data
+    # volumes:
+    #   - ./data:/app/data

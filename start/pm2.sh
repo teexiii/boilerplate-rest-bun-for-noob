@@ -1,0 +1,1 @@
+git pull && bun i && pm2 del boilerplate-bun-for-noob || pm2 start --interpreter=bun index.ts --name boilerplate-bun-for-noob
