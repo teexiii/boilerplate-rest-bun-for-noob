@@ -4,13 +4,13 @@ import { AppRoleDefault } from '@/data';
 import { db } from '@/lib/server/db';
 import { fetchSocialProfile } from '@/lib/auth/social/socialFetch';
 import { generateAccessToken, generateRefreshToken } from '@/lib/auth/jwt';
-import { formatObjectId } from '@/lib/utils/mongo-id';
 import { refreshTokenRepo } from '@/repositories/refreshTokenRepo';
 import { userRepo } from '@/repositories/userRepo';
 import { roleService } from '@/services/roleService';
 import type { AuthResponse } from '@/types/auth';
 import type { SocialAuthInput, SocialProfile } from '@/types/socialAuth';
 import { toUserReponse } from '@/types/user';
+import { randomUUIDv7 } from 'bun';
 
 export const socialAuthService = {
 	/**
@@ -98,7 +98,7 @@ export const socialAuthService = {
 		// Create refresh token in DB and get the ID
 		const refreshTokenId = await refreshTokenRepo.create(
 			user.id,
-			'' // Will be updated after generation
+			randomUUIDv7() // Will be updated after generation
 		);
 
 		// Generate refresh token with ID
@@ -106,7 +106,7 @@ export const socialAuthService = {
 
 		// Update the token string in the database
 		await db.refreshToken.update({
-			where: { id: formatObjectId(refreshTokenId) },
+			where: { id: refreshTokenId },
 			data: { token: refreshToken },
 		});
 
@@ -161,7 +161,7 @@ export const socialAuthService = {
 
 		// Check if user has a password
 		const user = await db.user.findUnique({
-			where: { id: formatObjectId(userId) },
+			where: { id: userId },
 			select: { password: true },
 		});
 

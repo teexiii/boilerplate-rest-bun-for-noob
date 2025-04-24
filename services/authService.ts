@@ -2,12 +2,12 @@ import { AppRoleDefault } from '@/data';
 import { checkCorrectPassword, hashPassword } from '@/lib/auth/password';
 import { db } from '@/lib/server/db';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '@/lib/auth/jwt';
-import { formatObjectId } from '@/lib/utils/mongo-id';
 import { refreshTokenRepo } from '@/repositories/refreshTokenRepo';
 import { userRepo } from '@/repositories/userRepo';
 import { roleService } from '@/services/roleService';
 import type { RegisterInput, AuthResponse, LoginInput, TokenRefreshInput } from '@/types/auth';
 import { toUserReponse } from '@/types/user';
+import { randomUUIDv7 } from 'bun';
 
 export const authService = {
 	/**
@@ -44,7 +44,7 @@ export const authService = {
 		// Create refresh token in DB and get the ID
 		const refreshTokenId = await refreshTokenRepo.create(
 			user.id,
-			'' // Will be updated after generation
+			randomUUIDv7() // Will be updated after generation
 			// No expiration passed - will use AppConfig value
 		);
 
@@ -53,7 +53,7 @@ export const authService = {
 
 		// Update the token string in the database
 		await db.refreshToken.update({
-			where: { id: formatObjectId(refreshTokenId) },
+			where: { id: refreshTokenId },
 			data: { token: refreshToken },
 		});
 
@@ -94,7 +94,7 @@ export const authService = {
 		// Create refresh token in DB and get the ID
 		const refreshTokenId = await refreshTokenRepo.create(
 			user.id,
-			'' // Will be updated after generation
+			randomUUIDv7() // Will be updated after generation
 			// No expiration passed - will use AppConfig value
 		);
 
@@ -103,7 +103,7 @@ export const authService = {
 
 		// Update the token string in the database
 		await db.refreshToken.update({
-			where: { id: formatObjectId(refreshTokenId) },
+			where: { id: refreshTokenId },
 			data: { token: refreshToken },
 		});
 
@@ -143,7 +143,7 @@ export const authService = {
 			// Create new refresh token in DB and get the ID
 			const newRefreshTokenId = await refreshTokenRepo.create(
 				user.id,
-				'' // Will be updated after generation
+				randomUUIDv7() // Will be updated after generation
 				// 300 * 24 * 60 * 60 * 1000 // 300 days in ms
 			);
 
@@ -152,7 +152,7 @@ export const authService = {
 
 			// Update the token string in the database
 			await db.refreshToken.update({
-				where: { id: formatObjectId(newRefreshTokenId) },
+				where: { id: newRefreshTokenId },
 				data: { token: newRefreshToken },
 			});
 

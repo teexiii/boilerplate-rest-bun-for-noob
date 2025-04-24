@@ -45,6 +45,11 @@ export async function updateEntity<T extends object>(
 	return updateFn(id, validData);
 }
 
+// Generic update function that works with any interface
+export function entity<T extends object>(data: unknown, validator: { validate: (data: unknown) => T }) {
+	return validator.validate(data);
+}
+
 // // Alternative implementation with a simpler interface
 // export function validateInterface<T extends object>(data: unknown, template: T): T {
 //     if (typeof data !== "object" || data === null) {

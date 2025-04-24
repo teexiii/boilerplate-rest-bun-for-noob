@@ -4,7 +4,6 @@ import { AppRoleDefault } from '@/data';
 import { hashPassword } from '@/lib/auth/password';
 import { db } from '@/lib/server/db';
 import { generateAccessToken } from '@/lib/auth/jwt';
-import { formatObjectId } from '@/lib/utils/mongo-id';
 import { matchRoute } from '@/lib/utils/router';
 import { routes } from '@/routes';
 import { userService } from '@/services/userService';
@@ -154,7 +153,7 @@ describe('Role API Integration Tests', () => {
 			if (testRoleId) {
 				try {
 					await db.role.delete({
-						where: { id: formatObjectId(testRoleId) },
+						where: { id: testRoleId },
 					});
 				} catch (error) {
 					console.log('Error deleting test role:', error);
@@ -326,7 +325,7 @@ describe('Role API Integration Tests', () => {
 
 			// Verify role was deleted
 			const deletedRole = await db.role.findUnique({
-				where: { id: formatObjectId(tempRole.id) },
+				where: { id: tempRole.id },
 			});
 
 			expect(deletedRole).toBeNull();

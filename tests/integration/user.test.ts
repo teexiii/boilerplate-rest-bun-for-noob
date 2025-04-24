@@ -1,9 +1,7 @@
 import tokenCache from '@/caching/controller/token';
 import { AppRoleDefault } from '@/data';
-import { hashPassword } from '@/lib/auth/password';
 import { db } from '@/lib/server/db';
 import { generateAccessToken } from '@/lib/auth/jwt';
-import { formatObjectId } from '@/lib/utils/mongo-id';
 import { matchRoute } from '@/lib/utils/router';
 import { routes } from '@/routes';
 import { userService } from '@/services/userService';
@@ -197,7 +195,7 @@ describe('User API Integration Tests', () => {
 
 			// Verify user was deleted
 			const deletedUser = await db.user.findUnique({
-				where: { id: formatObjectId(tempUser.id) },
+				where: { id: tempUser.id },
 			});
 
 			expect(deletedUser).toBeNull();
@@ -554,7 +552,7 @@ describe('User API Integration Tests', () => {
 
 			// Verify role was changed in database
 			const updatedUser = await db.user.findUnique({
-				where: { id: formatObjectId(userId) },
+				where: { id: userId },
 				include: { role: true },
 			});
 			expect(updatedUser?.role.name).toBe(AppRoleDefault.PRO);

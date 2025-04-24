@@ -1,7 +1,6 @@
 import AppConfig from '@/config/AppConfig';
 import { db } from '@/lib/server/db';
 import { timeToMs } from '@/lib/auth/jwt/time';
-import { formatObjectId } from '@/lib/utils/mongo-id';
 
 export const refreshTokenRepo = {
 	/**
@@ -38,7 +37,7 @@ export const refreshTokenRepo = {
 	 */
 	async findById(id: string) {
 		return db.refreshToken.findUnique({
-			where: { id: formatObjectId(id) },
+			where: { id },
 			include: { user: { include: { role: true } } },
 		});
 	},
@@ -48,7 +47,7 @@ export const refreshTokenRepo = {
 	 */
 	async revoke(id: string) {
 		return db.refreshToken.update({
-			where: { id: formatObjectId(id) },
+			where: { id },
 			data: { isRevoked: true },
 		});
 	},
@@ -58,7 +57,7 @@ export const refreshTokenRepo = {
 	 */
 	async revokeAllForUser(userId: string) {
 		return db.refreshToken.updateMany({
-			where: { userId: formatObjectId(userId), isRevoked: false },
+			where: { userId, isRevoked: false },
 			data: { isRevoked: true },
 		});
 	},

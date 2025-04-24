@@ -1,5 +1,4 @@
 import { db } from '@/lib/server/db';
-import { formatObjectId } from '@/lib/utils/mongo-id';
 import type { UserWithRole, UserCreateInput, UserUpdateInput } from '@/types/user';
 import type { Social } from '@prisma/client';
 
@@ -10,13 +9,43 @@ const include = {
 
 type IUser = UserWithRole & { socials?: Social[] };
 
+const whereSearch = (query: string) => {
+	return {
+		OR: [
+			{
+				email: {
+					contains: query,
+					mode: 'insensitive' as any,
+				},
+			},
+			{
+				name: {
+					contains: query,
+					mode: 'insensitive' as any,
+				},
+			},
+			{
+				id: {
+					contains: query,
+					mode: 'insensitive' as any,
+				},
+			},
+			{
+				phone: {
+					contains: query,
+				},
+			},
+		],
+	};
+};
+
 export const userRepo = {
 	/**
 	 * Find user by ID
 	 */
 	async findById(id: string) {
 		return db.user.findUnique({
-			where: { id: formatObjectId(id) },
+			where: { id },
 			include,
 		});
 	},
@@ -34,14 +63,9 @@ export const userRepo = {
 	/**
 	 * Search users by email
 	 */
-	async searchByEmail(query: string, options?: { limit?: number; offset?: number }) {
+	async search(query: string, options?: { limit?: number; offset?: number }) {
 		return db.user.findMany({
-			where: {
-				email: {
-					contains: query,
-					mode: 'insensitive',
-				},
-			},
+			where: whereSearch(query),
 			include,
 			take: options?.limit,
 			skip: options?.offset,
@@ -52,14 +76,9 @@ export const userRepo = {
 	/**
 	 * Count users matching email search
 	 */
-	async countByEmailSearch(query: string) {
+	async countByQuery(query: string) {
 		return db.user.count({
-			where: {
-				email: {
-					contains: query,
-					mode: 'insensitive',
-				},
-			},
+			where: whereSearch(query),
 		});
 	},
 
@@ -97,7 +116,7 @@ export const userRepo = {
 	 */
 	async update(id: string, data: UserUpdateInput): Promise<IUser> {
 		return db.user.update({
-			where: { id: formatObjectId(id) },
+			where: { id },
 			data,
 			include,
 		});
@@ -108,7 +127,7 @@ export const userRepo = {
 	 */
 	async updatePassword(id: string, password: string): Promise<IUser> {
 		return db.user.update({
-			where: { id: formatObjectId(id) },
+			where: { id },
 			data: { password },
 			include,
 		});
@@ -119,7 +138,7 @@ export const userRepo = {
 	 */
 	async delete(id: string): Promise<void> {
 		await db.user.delete({
-			where: { id: formatObjectId(id) },
+			where: { id },
 		});
 	},
 
@@ -128,7 +147,7 @@ export const userRepo = {
 	 */
 	async countByRoleId(roleId: string): Promise<number> {
 		return db.user.count({
-			where: { roleId: formatObjectId(roleId) },
+			where: { roleId },
 		});
 	},
 
@@ -137,7 +156,7 @@ export const userRepo = {
 	 */
 	async findByRoleId(roleId: string, options?: { limit?: number; offset?: number }): Promise<IUser[]> {
 		return db.user.findMany({
-			where: { roleId: formatObjectId(roleId) },
+			where: { roleId },
 			include,
 			take: options?.limit,
 			skip: options?.offset,

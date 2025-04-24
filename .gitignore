@@ -170,4 +170,8 @@ dist
 
 # Finder (MacOS) folder config
 .DS_Store
-bun.lock
+
+bun.lock*
+pnpm-lock.json
+package-lock.json
+yarn-lock.json
