@@ -1,0 +1,91 @@
+# syntax=docker/dockerfile:1.4
+
+# ===================================
+#       BUILD ARGUMENTS
+# ===================================
+ARG NODE_VERSION=20.15
+ARG ALPINE_VERSION=3.19
+ARG UBUNTU_VERSION=22.04
+
+# ===================================
+#       PHASE 1 - DEPENDENCIES
+# ===================================
+FROM node:${NODE_VERSION} AS deps
+WORKDIR /app
+
+RUN npm i -g bun
+
+# Copy package files and remove version
+COPY package.json prisma ./
+RUN VERSION=$(node -p "require('./package.json').version") 
+
+RUN bun install
+
+# ===================================
+#       PHASE 2 - BUILDER
+# ===================================
+FROM node:${NODE_VERSION} AS builder
+
+# Set build-time variables
+ARG BUILD_VERSION
+ARG NODE_ENV=production
+
+# Set environment variables
+ENV NODE_ENV=${NODE_ENV} \
+    NEXT_TELEMETRY_DISABLED=1 \
+    NODE_OPTIONS=--max_old_space_size=8192
+
+WORKDIR /app
+
+# Copy dependencies from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+COPY ./.env.dev ./.env
+
+RUN npm i -g bun
+
+# Build application
+RUN npm run build
+
+# Install and run node-prune (using native npx for better compatibility)
+RUN npx -y node-prune
+
+
+# ===================================
+#       PHASE 4 - RUNNER
+# ===================================
+FROM node:${NODE_VERSION}-alpine${ALPINE_VERSION} AS runner
+
+# Install production dependencies
+RUN apk add --no-cache \
+    tini~=0.19.0
+
+# Create non-root user and group
+RUN addgroup --system --gid 1001 nodejs \
+    && adduser --system --uid 1001 user \
+    && mkdir -p /usr/app \
+    && chown -R user:nodejs /usr/app
+
+WORKDIR /usr/app
+
+# Copy application files with explicit ownership
+COPY --from=deps --chown=user:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=user:nodejs /app/package.json ./
+COPY --from=builder --chown=user:nodejs /app/dist ./dist
+COPY --from=builder --chown=user:nodejs /app/.env ./
+
+RUN npm i -g bun
+
+# Switch to non-root user
+USER user
+
+# Expose application port
+EXPOSE 3000
+
+ENV NODE_ENV=production
+
+# Use Tini as init system
+ENTRYPOINT ["/sbin/tini", "--"]
+
+# Start the application with explicit host binding
+CMD bun run dist/index.js

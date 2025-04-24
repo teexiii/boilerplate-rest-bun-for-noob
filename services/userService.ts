@@ -39,6 +39,15 @@ export const userService = {
 		return user;
 	},
 
+	async getUserPublicById(id: string) {
+		//TODO add public user
+		const user = await userRepo.findById(id);
+		if (!user) {
+			throw new Error('User not found', { cause: 404 });
+		}
+		return user;
+	},
+
 	/**
 	 * Get user by ID
 	 */
@@ -92,6 +101,9 @@ export const userService = {
 		if (!user) {
 			throw new Error('User not found', { cause: 404 });
 		}
+		if (!user.password) {
+			throw new Error('Not found passsword', { cause: 400 });
+		}
 
 		// Verify current password
 		const validPassword = await checkCorrectPassword(user.password, data.currentPassword);
@@ -124,6 +136,29 @@ export const userService = {
 		return userRepo.findByRoleId(roleId);
 	},
 
+	// searchPublicUsers
+	async searchPublicUsers(query: string, page = 1, limit = 50) {
+		//TODO search public user
+		console.log('?user/search');
+		const offset = (page - 1) * limit;
+
+		const [users, total] = await Promise.all([
+			//
+			userRepo.search(query, { limit, offset }),
+			userRepo.countByQuery(query),
+		]);
+
+		return {
+			list: users,
+			pagination: {
+				total,
+				page,
+				limit,
+				pages: Math.ceil(total / limit),
+			},
+		};
+	},
+
 	/**
 	 * Search users by email
 	 */
@@ -132,8 +167,8 @@ export const userService = {
 
 		const [users, total] = await Promise.all([
 			//
-			userRepo.searchByEmail(query, { limit, offset }),
-			userRepo.countByEmailSearch(query),
+			userRepo.search(query, { limit, offset }),
+			userRepo.countByQuery(query),
 		]);
 
 		return {

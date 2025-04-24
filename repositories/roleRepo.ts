@@ -1,5 +1,4 @@
 import { db } from '@/lib/server/db';
-import { formatObjectId } from '@/lib/utils/mongo-id';
 import type { RoleCreateInput, RoleUpdateInput } from '@/types/role';
 
 export const roleRepo = {
@@ -8,7 +7,7 @@ export const roleRepo = {
 	 */
 	async findById(id: string) {
 		return db.role.findUnique({
-			where: { id: formatObjectId(id) },
+			where: { id },
 		});
 	},
 
@@ -52,7 +51,7 @@ export const roleRepo = {
 	 */
 	async update(id: string, data: RoleUpdateInput) {
 		return db.role.update({
-			where: { id: formatObjectId(id) },
+			where: { id },
 			data,
 		});
 	},
@@ -62,7 +61,7 @@ export const roleRepo = {
 	 */
 	async delete(id: string) {
 		return db.role.delete({
-			where: { id: formatObjectId(id) },
+			where: { id },
 		});
 	},
 
@@ -71,7 +70,7 @@ export const roleRepo = {
 	 */
 	async getUsers(roleId: string) {
 		return db.user.findMany({
-			where: { roleId: formatObjectId(roleId) },
+			where: { roleId },
 			select: {
 				id: true,
 				email: true,
@@ -86,7 +85,7 @@ export const roleRepo = {
 	 */
 	async countUsers(roleId: string) {
 		return db.user.count({
-			where: { roleId: formatObjectId(roleId) },
+			where: { roleId },
 		});
 	},
 

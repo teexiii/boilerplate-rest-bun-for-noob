@@ -1,12 +1,8 @@
-// src/handlers/socialAuthHandler.ts
-
 import { fail400, fail401, fail403, success } from '@/lib/response';
 import { errorHandler } from '@/middleware/error';
-import { authenticate, requireSelfOrAdmin } from '@/middleware/auth';
 import { socialAuthService } from '@/services/socialAuthService';
 import type { AuthenticatedRequest, RouteParams } from '@/types/auth';
 import type { SocialAuthInput } from '@/types/socialAuth';
-import tokenCache from '@/caching/controller/token';
 
 export const socialAuthHandler = {
 	/**

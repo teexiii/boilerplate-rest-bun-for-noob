@@ -4,12 +4,12 @@ generator client {
 }
 
 datasource db {
-  provider = "mongodb"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model Social {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id        String   @id @default(cuid())
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -18,7 +18,7 @@ model Social {
   email       String?
   profileData Json?   @map("profile_data")
 
-  userId String @map("user_id") @db.ObjectId
+  userId String @map("user_id")
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerId])
@@ -27,14 +27,15 @@ model Social {
 }
 
 model User {
-  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  id       String  @id @default(cuid())
   email    String  @unique
+  phone    String?
   name     String?
   password String?
   image    String?
 
   role   Role   @relation(fields: [roleId], references: [id])
-  roleId String @map("role_id") @db.ObjectId
+  roleId String @map("role_id")
 
   socials Social[]
 
@@ -47,9 +48,9 @@ model User {
 }
 
 model RefreshToken {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id        String   @id @default(cuid())
   token     String   @unique
-  userId    String   @map("user_id") @db.ObjectId
+  userId    String   @map("user_id")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now()) @map("created_at")
@@ -59,7 +60,7 @@ model RefreshToken {
 }
 
 model Role {
-  id              String           @id @default(auto()) @map("_id") @db.ObjectId
+  id              String           @id @default(cuid())
   name            String           @unique
   description     String?
   rolePermissions RolePermission[]
@@ -71,7 +72,7 @@ model Role {
 }
 
 model Permission {
-  id              String           @id @default(auto()) @map("_id") @db.ObjectId
+  id              String           @id @default(cuid())
   name            String           @unique
   description     String?
   rolePermissions RolePermission[]
@@ -82,13 +83,154 @@ model Permission {
 }
 
 model RolePermission {
-  id           String     @id @default(auto()) @map("_id") @db.ObjectId
-  roleId       String     @map("role_id") @db.ObjectId
-  permissionId String     @map("permission_id") @db.ObjectId
+  id           String     @id @default(cuid())
+  roleId       String     @map("role_id")
+  permissionId String     @map("permission_id")
   role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
   permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
   createdAt    DateTime   @default(now()) @map("created_at")
 
   @@unique([roleId, permissionId])
   @@map("role_permissions")
+}
+
+model SmileImage {
+  id String @id @default(cuid())
+
+  url    String
+  url1x1 String @map("url_1x1")
+
+  // Relationship with Station
+  stationId String  @map("station_id")
+  station   Station @relation(fields: [stationId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([url, url1x1])
+  @@map("smile_images")
+}
+
+model News {
+  id String @id @default(cuid())
+
+  title       String
+  slug        String  @unique
+  url         String
+  description String?
+  content     String
+
+  author String?
+  tags   String[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("news")
+}
+
+model AdministrativeRegion {
+  id         Int     @id
+  name       String
+  nameEn     String  @map("name_en")
+  codeName   String? @map("code_name")
+  codeNameEn String? @map("code_name_en")
+
+  provinces Province[]
+
+  @@map("administrative_regions")
+}
+
+model AdministrativeUnit {
+  id          Int     @id
+  fullName    String? @map("full_name")
+  fullNameEn  String? @map("full_name_en")
+  shortName   String? @map("short_name")
+  shortNameEn String? @map("short_name_en")
+  codeName    String? @map("code_name")
+  codeNameEn  String? @map("code_name_en")
+
+  provinces Province[]
+  districts District[]
+  wards     Ward[]
+
+  @@map("administrative_units")
+}
+
+model Province {
+  code                   String  @id
+  name                   String
+  nameEn                 String? @map("name_en")
+  fullName               String  @map("full_name")
+  fullNameEn             String? @map("full_name_en")
+  codeName               String? @map("code_name")
+  administrativeUnitId   Int?    @map("administrative_unit_id")
+  administrativeRegionId Int?    @map("administrative_region_id")
+
+  administrativeUnit   AdministrativeUnit?   @relation(fields: [administrativeUnitId], references: [id])
+  administrativeRegion AdministrativeRegion? @relation(fields: [administrativeRegionId], references: [id])
+
+  districts District[]
+  stations  Station[]
+
+  @@index([administrativeRegionId], name: "idx_provinces_region")
+  @@index([administrativeUnitId], name: "idx_provinces_unit")
+  @@map("provinces")
+}
+
+model District {
+  code                 String  @id
+  name                 String
+  nameEn               String? @map("name_en")
+  fullName             String? @map("full_name")
+  fullNameEn           String? @map("full_name_en")
+  codeName             String? @map("code_name")
+  provinceCode         String? @map("province_code")
+  administrativeUnitId Int?    @map("administrative_unit_id")
+
+  province           Province?           @relation(fields: [provinceCode], references: [code])
+  administrativeUnit AdministrativeUnit? @relation(fields: [administrativeUnitId], references: [id])
+
+  wards Ward[]
+
+  @@index([provinceCode], name: "idx_districts_province")
+  @@index([administrativeUnitId], name: "idx_districts_unit")
+  @@map("districts")
+}
+
+model Ward {
+  code                 String  @id
+  name                 String
+  nameEn               String? @map("name_en")
+  fullName             String? @map("full_name")
+  fullNameEn           String? @map("full_name_en")
+  codeName             String? @map("code_name")
+  districtCode         String? @map("district_code")
+  administrativeUnitId Int?    @map("administrative_unit_id")
+
+  district           District?           @relation(fields: [districtCode], references: [code])
+  administrativeUnit AdministrativeUnit? @relation(fields: [administrativeUnitId], references: [id])
+
+  @@index([districtCode], name: "idx_wards_district")
+  @@index([administrativeUnitId], name: "idx_wards_unit")
+  @@map("wards")
+}
+
+model Station {
+  id       String  @id @default(cuid())
+  name     String
+  code     String  @unique
+  address  String?
+  location Json? // Can store latitude/longitude coordinates
+
+  // Relationships
+  provinceCode String?      @map("province_code")
+  province     Province?    @relation(fields: [provinceCode], references: [code], onDelete: Cascade)
+  smileImages  SmileImage[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([name, provinceCode])
+  @@map("stations")
 }

@@ -23,7 +23,7 @@ export function createPrismaClient() {
 		// Test the database connection
 		try {
 			// Simple query to test connection
-			await client.$runCommandRaw({ ping: 1 });
+			await client.$executeRawUnsafe('SELECT 1');
 			console.log('Database connection established successfully');
 		} catch (error) {
 			console.error('Failed to connect to the database:', error);

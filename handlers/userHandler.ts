@@ -41,6 +41,32 @@ export const userHandler = {
 			});
 		}),
 
+	// searchPublicUsers
+	searchPublicUsers: async (req: AuthenticatedRequest, params: RouteParams) =>
+		errorHandler(async () => {
+			const url = new URL(req.url);
+			const query = url.searchParams.get('q') || '';
+			const page = parseInt(url.searchParams.get('page') || '1');
+			const limit = parseInt(url.searchParams.get('limit') || '50');
+
+			const result = await userService.searchPublicUsers(query, page, limit);
+			const list = result.list.map((x) => toUserReponse(x));
+
+			return success({
+				data: {
+					...result,
+					list,
+				},
+			});
+		}),
+
+	// getUserPublicById
+	getPublicUserById: async (req: AuthenticatedRequest, params: RouteParams) =>
+		errorHandler(async () => {
+			const user = await userService.getUserPublicById(params.id);
+			return success({ data: toUserReponse(user) });
+		}),
+
 	/**
 	 * Get user by ID
 	 */
