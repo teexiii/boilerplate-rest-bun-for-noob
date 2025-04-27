@@ -16,7 +16,7 @@ COPY ./.env.docker.local ./.env
 ENV NODE_ENV=production
 
 # Expose the port your app runs on
-EXPOSE 3070
+EXPOSE 3082
 
 # Run the app
 CMD ["bun", "index.ts"]
