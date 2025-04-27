@@ -10,3 +10,7 @@ out/
 gcloud-service-account.json
 __test__
 dist
+eslint.config.js
+.vscode
+start
+tests
