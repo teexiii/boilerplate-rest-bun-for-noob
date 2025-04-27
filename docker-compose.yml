@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - '3070:3070'
+      - '3082:3082'
     restart: unless-stopped
     # Add any environment variables your backend needs
     # environment:
