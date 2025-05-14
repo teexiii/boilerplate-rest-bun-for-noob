@@ -1,9 +1,10 @@
-import { fail400, fail401, fail403 } from '@/lib/response';
+import { fail, fail400, fail401, fail403 } from '@/lib/response';
 import { verifyAccessToken } from '@/lib/auth/jwt';
 import { userRepo } from '@/repositories/userRepo';
-import type { AuthenticatedRequest, RouteParams } from '@/types/auth';
+import type { AuthenticatedRequest, RouteParams, TokenPayload } from '@/types/auth';
 import tokenCache from '@/caching/controller/token';
 import { AppRoleDefault } from '@/data';
+import dayjs from 'dayjs';
 
 export function getAccessTokenByHeader(headers: Headers) {
 	//
@@ -25,6 +26,26 @@ export function getAccessTokenByHeader(headers: Headers) {
 }
 
 /**
+ * Checks if a JWT token's expiration is less than 1 day away
+ * @param {Object} payload - The decoded JWT token payload containing exp timestamp
+ * @returns {boolean} - True if token expires in less than 1 day, false otherwise
+ */
+export const checkTokenExpiringWithinDays = (payload: TokenPayload, day: number = 1) => {
+	if (!payload || !payload.exp) {
+		return true; // If no payload or no exp field, consider it as expiring
+	}
+
+	// Get milliseconds until expiration
+	const msUntilExpiration = dayjs(payload.exp * 1000).diff(dayjs());
+
+	// Convert to days (86400000 ms = 1 day)
+	const daysUntilExpiration = msUntilExpiration / 86400000;
+
+	// Check if less than 3 day until expiration
+	return daysUntilExpiration < day;
+};
+
+/**
  * Authenticate user from JWT token with Redis caching
  */
 export async function authenticate(req: AuthenticatedRequest, params: RouteParams): Promise<Response | null> {
@@ -40,6 +61,7 @@ export async function authenticate(req: AuthenticatedRequest, params: RouteParam
 
 		// Token not in cache, verify it
 		const payload = await verifyAccessToken(token);
+		const isTokenExpiringSoon = checkTokenExpiringWithinDays(payload, 27);
 
 		// Get user from database
 		const user = await userRepo.findById(payload.userId);
@@ -51,6 +73,7 @@ export async function authenticate(req: AuthenticatedRequest, params: RouteParam
 		// Attach user to request
 		req.user = {
 			...user,
+			isTokenExpiringSoon,
 			isAdmin: user?.role.name == AppRoleDefault.ADMIN,
 		};
 
@@ -58,7 +81,9 @@ export async function authenticate(req: AuthenticatedRequest, params: RouteParam
 
 		return null; // Continue to next middleware/handler
 	} catch (error) {
-		return fail401('Invalid token');
+		if ((error as any).cause == 'TOKEN_EXPIRED') return fail(`${(error as any).message || 'Invalid token'}`, 498);
+
+		return fail401(`${error instanceof Error ? error.message : 'Invalid token'}`);
 	}
 }
 

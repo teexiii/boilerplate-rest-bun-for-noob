@@ -1,5 +1,6 @@
 import pino from 'pino';
 import { IsProd } from '@/config';
+import env from '@/config/env';
 
 const transport = {
 	target: 'pino-pretty',
@@ -11,7 +12,7 @@ const transport = {
 };
 
 export const logger = pino({
-	level: IsProd() ? 'error' : 'debug',
+	level: env('LOGGER_LEVEL', true, 'info'),
 	transport: IsProd() ? undefined : transport,
 });
 

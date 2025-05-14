@@ -7,6 +7,8 @@ export interface TokenPayload {
 	userId: string;
 	roleId: string;
 	roleName: string;
+	iat?: number;
+	exp?: number;
 }
 
 export interface RefreshTokenPayload {
@@ -15,8 +17,10 @@ export interface RefreshTokenPayload {
 }
 
 export interface AuthResponse {
-	accessToken: string;
-	refreshToken: string;
+	session: {
+		accessToken: string;
+		refreshToken: string;
+	};
 	user: UserResponse;
 }
 
@@ -35,6 +39,7 @@ export interface TokenRefreshInput {
 
 export interface UserInRequest extends UserWithRole {
 	isAdmin: boolean;
+	isTokenExpiringSoon?: boolean;
 }
 
 export interface AuthenticatedRequest extends Request {

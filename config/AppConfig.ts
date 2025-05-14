@@ -6,7 +6,7 @@ const AppConfig = {
 	port: parseInt(process.env.PORT || '3000', 10),
 	env: env('ENV', true, process.env.NODE_ENV),
 	tz: env('TZ', true, 'Asia/Ho_Chi_Minh'),
-
+	title: process.env.TITLE,
 	database: {
 		url: env('DATABASE_URL', false),
 	},
@@ -45,11 +45,22 @@ const AppConfig = {
 		return `${env('BASE_URL', true, '')}${url}`;
 	},
 
-	getApiUpfileBestUrl: (url = '') => {
+	getCdn: (url = '') => {
 		if (url?.endsWith('/')) url = url.slice(0, -1);
 		if (!url?.startsWith('/')) url = `/${url}`;
 
-		return `${env('UPFILE_BEST_FILE_SERVE', false)}${url}`;
+		return `${env('UPFILE_BEST_FILE_SERVE', false)}/file${url}`;
+	},
+	getUpfileBestUpload: (url = '') => {
+		if (url?.endsWith('/')) url = url.slice(0, -1);
+		if (!url?.startsWith('/')) url = `/${url}`;
+		return `${env('UPFILE_BEST_UPLOAD', false)}${url}`;
+	},
+	getUploadDirPath: (path?: string) => {
+		if (path?.endsWith('/')) path = path.slice(0, -1);
+		if (!path?.startsWith('/')) path = `/${path}`;
+
+		return `${env('UPFILE_BEST_UPLOAD_DIR_PATH', false)}${path ? path : ''}`;
 	},
 };
 
