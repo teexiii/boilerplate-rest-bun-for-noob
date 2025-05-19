@@ -39,6 +39,14 @@ export const userService = {
 		return user;
 	},
 
+	async getUserInfoById(id: string) {
+		const user = await userRepo.findById(id);
+		if (!user) {
+			throw new Error('User not found', { cause: 404 });
+		}
+		return user;
+	},
+
 	async getUserPublicById(id: string) {
 		//TODO add public user
 		const user = await userRepo.findById(id);
@@ -137,7 +145,7 @@ export const userService = {
 	},
 
 	// searchPublicUsers
-	async searchPublicUsers(query: string, page = 1, limit = 50) {
+	async searchPublicUsers(query: string, page = 1, limit = 30) {
 		//TODO search public user
 		console.log('?user/search');
 		const offset = (page - 1) * limit;
@@ -162,7 +170,7 @@ export const userService = {
 	/**
 	 * Search users by email
 	 */
-	async searchUsers(query: string, page = 1, limit = 50) {
+	async searchUsers(query: string, page = 1, limit = 30) {
 		const offset = (page - 1) * limit;
 
 		const [users, total] = await Promise.all([
