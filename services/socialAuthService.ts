@@ -111,8 +111,7 @@ export const socialAuthService = {
 		});
 
 		return {
-			accessToken,
-			refreshToken,
+			session: { accessToken, refreshToken },
 			user: toUserReponse(user),
 		};
 	},

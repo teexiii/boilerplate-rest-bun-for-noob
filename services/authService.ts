@@ -58,8 +58,7 @@ export const authService = {
 		});
 
 		return {
-			accessToken,
-			refreshToken,
+			session: { accessToken, refreshToken },
 			user: toUserReponse(user),
 		};
 	},
@@ -108,8 +107,7 @@ export const authService = {
 		});
 
 		return {
-			accessToken,
-			refreshToken,
+			session: { accessToken, refreshToken },
 			user: toUserReponse(user),
 		};
 	},
