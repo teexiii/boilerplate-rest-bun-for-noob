@@ -451,7 +451,7 @@ describe('User API Integration Tests', () => {
 			});
 
 			const adminData = await adminLoginRes.json();
-			const adminToken = adminData.data.accessToken;
+			const adminToken = adminData.data.session.accessToken;
 
 			// Create test users with specific emails for search
 			const searchPrefix = `temp-test-search`;
@@ -463,14 +463,7 @@ describe('User API Integration Tests', () => {
 
 			// Create test users
 			for (const user of testUsers) {
-				await fetch(`${BASE_URL}/api/user`, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						Authorization: `Bearer ${adminToken}`,
-					},
-					body: JSON.stringify(user),
-				});
+				await userService.createUser(user);
 			}
 
 			// Test search
@@ -480,7 +473,6 @@ describe('User API Integration Tests', () => {
 					Authorization: `Bearer ${adminToken}`,
 				},
 			});
-
 			expect(searchResponse.status).toBe(200);
 
 			const searchResult = await searchResponse.json();

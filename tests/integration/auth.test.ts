@@ -103,126 +103,127 @@ describe('Auth API Integration Tests', () => {
 		const data = res.data || {};
 		expect(data.user).toBeDefined();
 		expect(data.user.email).toBe(testUser.email);
+		expect(data.session.accessToken).toBeDefined();
+		expect(data.session.refreshToken).toBeDefined();
+
+		// Save tokens for subsequent tests
+		accessToken = data.session.accessToken;
+		refreshToken = data.session.refreshToken;
+	});
+
+	it('should not register with existing email', async () => {
+		const response = await fetch(`${BASE_URL}/api/auth/register`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(testUser),
+		});
+
+		const res = await response.json();
+		expect(response.status).toBe(400);
+		expect(res.message).toBeDefined();
+	});
+
+	it('should login with valid credentials', async () => {
+		const response = await fetch(`${BASE_URL}/api/auth/login`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				email: testUser.email,
+				password: testUser.password,
+			}),
+		});
+
+		expect(response.status).toBe(200);
+		const res = await response.json();
+		const data = res.data || {};
+
+		expect(data.user).toBeDefined();
+		expect(data.user.email).toBe(testUser.email);
+		expect(data.session.accessToken).toBeDefined();
+		expect(data.session.refreshToken).toBeDefined();
+	});
+
+	it('should not login with invalid credentials', async () => {
+		const response = await fetch(`${BASE_URL}/api/auth/login`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				email: testUser.email,
+				password: 'wrongpassword',
+			}),
+		});
+
+		expect(response.status).toBe(400);
+		const res = await response.json();
+		expect(res.message).toBeDefined();
+	});
+
+	it('should refresh tokens', async () => {
+		const response = await fetch(`${BASE_URL}/api/auth/refresh`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				refreshToken,
+			}),
+		});
+
+		expect(response.status).toBe(200);
+		const res = await response.json();
+		const data = res.data || {};
+
+		console.log('data :>> ', data);
 		expect(data.accessToken).toBeDefined();
 		expect(data.refreshToken).toBeDefined();
 
-		// Save tokens for subsequent tests
+		// Update tokens for subsequent tests
 		accessToken = data.accessToken;
 		refreshToken = data.refreshToken;
 	});
 
-	// it("should not register with existing email", async () => {
-	//     const response = await fetch(`${BASE_URL}/api/auth/register`, {
-	//         method: "POST",
-	//         headers: { "Content-Type": "application/json" },
-	//         body: JSON.stringify(testUser),
-	//     });
+	it('should not refresh with invalid token', async () => {
+		const response = await fetch(`${BASE_URL}/api/auth/refresh`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				refreshToken: 'invalid-token',
+			}),
+		});
 
-	//     expect(response.status).toBe(400);
-	//     const res = await response.json();
-	//     expect(res.message).toBeDefined();
-	// });
+		expect(response.status).toBe(401);
+		const res = await response.json();
+		const data = res.data || {};
+		expect(res.message).toBeDefined();
+	});
 
-	// it("should login with valid credentials", async () => {
-	//     const response = await fetch(`${BASE_URL}/api/auth/login`, {
-	//         method: "POST",
-	//         headers: { "Content-Type": "application/json" },
-	//         body: JSON.stringify({
-	//             email: testUser.email,
-	//             password: testUser.password,
-	//         }),
-	//     });
+	it('should logout with valid token', async () => {
+		console.log('accessToken :>> ', accessToken);
+		const response = await fetch(`${BASE_URL}/api/auth/logout`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${accessToken}`,
+			},
+			body: JSON.stringify({
+				refreshToken,
+			}),
+		});
 
-	//     expect(response.status).toBe(200);
-	//     const res = await response.json();
-	//     const data = res.data || {};
+		const res = await response.json();
+		console.log('res :>> ', res);
+		expect(response.status).toBe(200);
+		expect(res.message).toBeDefined();
+	});
 
-	//     expect(data.user).toBeDefined();
-	//     expect(data.user.email).toBe(testUser.email);
-	//     expect(data.accessToken).toBeDefined();
-	//     expect(data.refreshToken).toBeDefined();
-	// });
+	it('should not access protected routes after logout', async () => {
+		const response = await fetch(`${BASE_URL}/api/profile`, {
+			method: 'GET',
+			headers: {
+				Authorization: `Bearer ${accessToken}`,
+			},
+		});
 
-	// it("should not login with invalid credentials", async () => {
-	//     const response = await fetch(`${BASE_URL}/api/auth/login`, {
-	//         method: "POST",
-	//         headers: { "Content-Type": "application/json" },
-	//         body: JSON.stringify({
-	//             email: testUser.email,
-	//             password: "wrongpassword",
-	//         }),
-	//     });
-
-	//     expect(response.status).toBe(400);
-	//     const res = await response.json();
-	//     expect(res.message).toBeDefined();
-	// });
-
-	// it("should refresh tokens", async () => {
-	//     const response = await fetch(`${BASE_URL}/api/auth/refresh`, {
-	//         method: "POST",
-	//         headers: { "Content-Type": "application/json" },
-	//         body: JSON.stringify({
-	//             refreshToken,
-	//         }),
-	//     });
-
-	//     expect(response.status).toBe(200);
-	//     const res = await response.json();
-	//     const data = res.data || {};
-
-	//     expect(data.accessToken).toBeDefined();
-	//     expect(data.refreshToken).toBeDefined();
-
-	//     // Update tokens for subsequent tests
-	//     accessToken = data.accessToken;
-	//     refreshToken = data.refreshToken;
-	// });
-
-	// it("should not refresh with invalid token", async () => {
-	//     const response = await fetch(`${BASE_URL}/api/auth/refresh`, {
-	//         method: "POST",
-	//         headers: { "Content-Type": "application/json" },
-	//         body: JSON.stringify({
-	//             refreshToken: "invalid-token",
-	//         }),
-	//     });
-
-	//     expect(response.status).toBe(403);
-	//     const res = await response.json();
-	//     const data = res.data || {};
-	//     expect(res.message).toBeDefined();
-	// });
-
-	// it("should logout with valid token", async () => {
-	//     console.log('accessToken :>> ', accessToken);
-	//     const response = await fetch(`${BASE_URL}/api/auth/logout`, {
-	//         method: "POST",
-	//         headers: {
-	//             "Content-Type": "application/json",
-	//             Authorization: `Bearer ${accessToken}`,
-	//         },
-	//         body: JSON.stringify({
-	//             refreshToken,
-	//         }),
-	//     });
-
-	//     const res = await response.json();
-	//     console.log('res :>> ', res);
-	//     expect(response.status).toBe(200);
-	//     expect(res.message).toBeDefined();
-	// });
-
-	// it("should not access protected routes after logout", async () => {
-	//     const response = await fetch(`${BASE_URL}/api/profile`, {
-	//         method: "GET",
-	//         headers: {
-	//             Authorization: `Bearer ${accessToken}`,
-	//         },
-	//     });
-
-	//     // Token might still be valid for a short time depending on your implementation
-	//     // In a real test, you might need to check that the token is definitely invalidated
-	//     console.log("Profile access response:", await response.text());
-	// });
+		// Token might still be valid for a short time depending on your implementation
+		// In a real test, you might need to check that the token is definitely invalidated
+		console.log('Profile access response:', await response.text());
+	});
 });
