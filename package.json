@@ -4,13 +4,14 @@
 	"module": "index.ts",
 	"type": "module",
 	"scripts": {
+		"start": "npx prisma db push && bun run index.ts",
 		"build": "bun build ./index.ts --outdir ./dist --target bun --minify",
 		"test": "bun test --coverage",
 		"dev": "bun --watch index.ts",
 		"lint": "eslint . ",
 		"reset-db-local": "prisma generate && npx prisma db push --force-reset && npm run seed",
 		"format": "prettier . --write",
-		"seed": "bun run prisma/seed.ts && npx prisma db execute --file=./prisma/ImportData_vn_units.sql --schema=./prisma/schema.prisma",
+		"seed": "bun run prisma/seed.ts",
 		"prisma:push": "npx prisma db push",
 		"postinstall": "prisma generate"
 	},

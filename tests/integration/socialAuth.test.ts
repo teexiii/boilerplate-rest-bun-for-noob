@@ -183,8 +183,8 @@ describe('Social Auth API Integration Tests', () => {
 		// Verify the response contains expected user and tokens
 		expect(data.user).toBeDefined();
 		expect(data.user.name).toBe(mockGoogleProfile.name);
-		expect(data.accessToken).toBeDefined();
-		expect(data.refreshToken).toBeDefined();
+		expect(data.session.accessToken).toBeDefined();
+		expect(data.session.refreshToken).toBeDefined();
 
 		// Verify the social login was created in the database
 		const socials = await db.social.findMany({
@@ -218,12 +218,12 @@ describe('Social Auth API Integration Tests', () => {
 		// Verify the response contains expected user and tokens
 		expect(data.user).toBeDefined();
 		expect(data.user.name).toBe(mockFacebookProfile.name);
-		expect(data.accessToken).toBeDefined();
-		expect(data.refreshToken).toBeDefined();
+		expect(data.session.accessToken).toBeDefined();
+		expect(data.session.refreshToken).toBeDefined();
 
 		// Save user and tokens for subsequent tests
 		const userId = data.user.id;
-		const accessToken = data.accessToken;
+		const accessToken = data.session.accessToken;
 
 		// Verify the social login was created in the database
 		const socials = await db.social.findMany({
@@ -279,8 +279,8 @@ describe('Social Auth API Integration Tests', () => {
 		const res = await loginResponse.json();
 
 		// Verify tokens and user data returned
-		expect(res.data.accessToken).toBeDefined();
-		expect(res.data.refreshToken).toBeDefined();
+		expect(res.data.session.accessToken).toBeDefined();
+		expect(res.data.session.refreshToken).toBeDefined();
 		expect(res.data.user).toBeDefined();
 		expect(res.data.user.name).toBe(mockGoogleProfile.name);
 
@@ -310,7 +310,7 @@ describe('Social Auth API Integration Tests', () => {
 
 		const googleData = await googleResponse.json();
 		const userId = googleData.data.user.id;
-		const accessToken = googleData.data.accessToken;
+		const accessToken = googleData.data.session.accessToken;
 
 		// Now link a Facebook social
 		fetchSocialProfileSpy.mockResolvedValue(mockFacebookProfile);
@@ -360,7 +360,7 @@ describe('Social Auth API Integration Tests', () => {
 
 		const googleData = await googleResponse.json();
 		const userId = googleData.data.user.id;
-		const accessToken = googleData.data.accessToken;
+		const accessToken = googleData.data.session.accessToken;
 
 		// Link a Facebook social
 		fetchSocialProfileSpy.mockResolvedValue(mockFacebookProfile);
@@ -413,7 +413,7 @@ describe('Social Auth API Integration Tests', () => {
 		});
 
 		const googleData = await googleResponse.json();
-		const accessToken = googleData.data.accessToken;
+		const accessToken = googleData.data.session.accessToken;
 
 		// Try to unlink the only social provider
 		const unlinkResponse = await fetch(`${BASE_URL}/api/auth/social/unlink/${SocialProvider.GOOGLE}`, {
