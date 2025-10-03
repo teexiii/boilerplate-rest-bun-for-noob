@@ -32,8 +32,7 @@ ARG NODE_ENV=production
 
 # Set environment variables
 ENV NODE_ENV=${NODE_ENV} \
-    NEXT_TELEMETRY_DISABLED=1 \
-    NODE_OPTIONS=--max_old_space_size=8192
+  NODE_OPTIONS=--max_old_space_size=8192
 
 WORKDIR /app
 
@@ -58,13 +57,13 @@ FROM node:${NODE_VERSION}-alpine${ALPINE_VERSION} AS runner
 
 # Install production dependencies
 RUN apk add --no-cache \
-    tini~=0.19.0
+  tini~=0.19.0
 
 # Create non-root user and group
 RUN addgroup --system --gid 1001 nodejs \
-    && adduser --system --uid 1001 user \
-    && mkdir -p /usr/app \
-    && chown -R user:nodejs /usr/app
+  && adduser --system --uid 1001 user \
+  && mkdir -p /usr/app \
+  && chown -R user:nodejs /usr/app
 
 WORKDIR /usr/app
 
@@ -72,6 +71,7 @@ WORKDIR /usr/app
 COPY --from=deps --chown=user:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=user:nodejs /app/package.json ./
 COPY --from=builder --chown=user:nodejs /app/dist ./dist
+COPY --from=builder --chown=user:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=user:nodejs /app/.env ./
 
 RUN npm i -g bun
@@ -88,4 +88,4 @@ ENV NODE_ENV=production
 ENTRYPOINT ["/sbin/tini", "--"]
 
 # Start the application with explicit host binding
-CMD bun run dist/index.js
+CMD ["bun", "run", "start"]

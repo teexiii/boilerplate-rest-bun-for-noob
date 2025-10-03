@@ -72,6 +72,7 @@ WORKDIR /usr/app
 COPY --from=deps --chown=user:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=user:nodejs /app/package.json ./
 COPY --from=builder --chown=user:nodejs /app/dist ./dist
+COPY --from=builder --chown=user:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=user:nodejs /app/.env ./
 
 RUN npm i -g bun
@@ -88,4 +89,4 @@ ENV NODE_ENV=production
 ENTRYPOINT ["/sbin/tini", "--"]
 
 # Start the application with explicit host binding
-CMD bun run dist/index.js
+CMD ["bun", "run", "start"]

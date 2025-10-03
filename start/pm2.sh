@@ -8,6 +8,8 @@ pm2 del boilerplate-bun-for-noob || true
 
 sleep 1
 
+npx prisma db push || true
+
 # Start the process with bun as the interpreter
 pm2 start --interpreter=bun index.ts --name boilerplate-bun-for-noob 
 
