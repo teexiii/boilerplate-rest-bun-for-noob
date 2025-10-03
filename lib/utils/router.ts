@@ -7,22 +7,50 @@ export function parsePathParams(routePath: string, requestPath: string): RoutePa
 	const routeParts = routePath.split('/').filter(Boolean);
 	const requestParts = requestPath.split('/').filter(Boolean);
 
-	if (routeParts.length !== requestParts.length) {
-		return null;
-	}
-
 	const params: RouteParams = {};
+	let routeIndex = 0;
+	let requestIndex = 0;
 
-	for (let i = 0; i < routeParts.length; i++) {
-		const routePart = routeParts[i];
-		const requestPart = requestParts[i];
+	while (routeIndex < routeParts.length && requestIndex < requestParts.length) {
+		const routePart = routeParts[routeIndex];
+		const requestPart = requestParts[requestIndex];
 
-		// Check if this is a parameter
-		if (routePart.startsWith(':')) {
+		// Check if this is a wildcard parameter
+		if (routePart.startsWith(':') && routePart.endsWith('*')) {
+			const paramName = routePart.slice(1, -1); // Remove ':' and '*'
+			// Collect all remaining path parts
+			const remainingParts = requestParts.slice(requestIndex);
+			params[paramName] = remainingParts.join('/');
+			break; // Wildcard consumes all remaining parts
+		}
+		// Check if this is a regular parameter
+		else if (routePart.startsWith(':')) {
 			const paramName = routePart.slice(1);
 			params[paramName] = requestPart;
-		} else if (routePart !== requestPart) {
-			// Regular path parts must match exactly
+		}
+		// Regular path parts must match exactly
+		else if (routePart !== requestPart) {
+			return null;
+		}
+
+		routeIndex++;
+		requestIndex++;
+	}
+
+	// Check if all route parts were processed
+	if (routeIndex < routeParts.length) {
+		// There are unprocessed route parts that aren't wildcards
+		const remainingRouteParts = routeParts.slice(routeIndex);
+		const hasWildcard = remainingRouteParts.some((part) => part.startsWith(':') && part.endsWith('*'));
+		if (!hasWildcard) {
+			return null;
+		}
+	}
+
+	// Check if all request parts were consumed (unless there was a wildcard)
+	if (requestIndex < requestParts.length) {
+		const hasWildcard = routeParts.some((part) => part.startsWith(':') && part.endsWith('*'));
+		if (!hasWildcard) {
 			return null;
 		}
 	}

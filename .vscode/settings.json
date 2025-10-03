@@ -34,5 +34,8 @@
 		"titleBar.inactiveBackground": "#3a010199",
 		"titleBar.inactiveForeground": "#e7e7e799"
 	},
-	"peacock.color": "#3a0101"
+	"peacock.color": "#3a0101",
+	"[dockerfile]": {
+		"editor.defaultFormatter": "ms-azuretools.vscode-containers"
+	}
 }
