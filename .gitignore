@@ -175,3 +175,8 @@ bun.lock*
 pnpm-lock.json
 package-lock.json
 yarn-lock.json
+
+
+claude
+claude.cmd
+claude.ps1
