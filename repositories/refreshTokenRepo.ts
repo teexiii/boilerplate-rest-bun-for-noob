@@ -1,25 +1,15 @@
-import AppConfig from '@/config/AppConfig';
 import { db } from '@/lib/server/db';
-import { timeToMs } from '@/lib/auth/jwt/time';
 
 export const refreshTokenRepo = {
 	/**
 	 * Create a new refresh token
 	 */
-	async create(userId: string, token: string, expiresIn?: number): Promise<string> {
-		// Use provided expiresIn or calculate from AppConfig
-		const expiration = expiresIn || timeToMs(AppConfig.jwt.refreshTokenExpiresIn);
-		const expiresAt = new Date(Date.now() + expiration);
-
+	async create(data: { id: string; token: string; expiresAt: Date; userId: string }) {
 		const refreshToken = await db.refreshToken.create({
-			data: {
-				token,
-				userId,
-				expiresAt,
-			},
+			data,
 		});
 
-		return refreshToken.id;
+		return refreshToken;
 	},
 
 	/**

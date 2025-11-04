@@ -37,9 +37,40 @@ export interface TokenRefreshInput {
 	refreshToken: string;
 }
 
+export interface VerifyEmailInput {
+	token: string;
+}
+
+export interface ResendVerificationInput {
+	email: string;
+}
+
+export interface ForgotPasswordInput {
+	email: string;
+}
+
+export interface ResetPasswordInput {
+	token: string;
+	newPassword: string;
+}
+
+export interface ChangePasswordInput {
+	currentPassword: string;
+	newPassword: string;
+}
+
+export interface ChangeEmailInput {
+	newEmail: string;
+	password: string;
+}
+
+export interface VerifyEmailChangeInput {
+	token: string;
+}
+
 export interface UserInRequest extends UserWithRole {
 	isAdmin: boolean;
-	isTokenExpiringSoon?: boolean;
+	// isTokenExpiringSoon?: boolean;
 }
 
 export interface AuthenticatedRequest extends Request {

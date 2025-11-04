@@ -120,8 +120,8 @@ describe('Role API Integration Tests', () => {
 		adminId = admin.id;
 		userId = user.id;
 
-		adminToken = generateAccessToken(admin);
-		userToken = generateAccessToken(user);
+		adminToken = await generateAccessToken(admin);
+		userToken = await generateAccessToken(user);
 	});
 
 	afterAll(async () => {

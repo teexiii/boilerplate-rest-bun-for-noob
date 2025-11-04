@@ -1,12 +1,12 @@
-import AppConfig from '@/config/AppConfig';
+import appConfig from '@/config/appConfig';
 import Redis from 'ioredis';
 
 const redisClient = new Redis({
-	port: AppConfig.redis.port,
-	host: AppConfig.redis.host,
-	...(AppConfig.redis.username ? { username: AppConfig.redis.username } : {}),
-	...(AppConfig.redis.password ? { password: AppConfig.redis.password } : {}),
-	...(AppConfig.redis.db ? { db: AppConfig.redis.db } : {}),
+	port: appConfig.redis.port,
+	host: appConfig.redis.host,
+	...(appConfig.redis.username ? { username: appConfig.redis.username } : {}),
+	...(appConfig.redis.password ? { password: appConfig.redis.password } : {}),
+	...(appConfig.redis.db ? { db: appConfig.redis.db } : {}),
 });
 
 redisClient.on('error', (err) => {
@@ -17,13 +17,13 @@ redisClient.on('error', (err) => {
 console.log('Redis client initialized');
 
 // Cache TTL in seconds (default: min * sec)
-const DEFAULT_CACHE_TTL = 1 * 60;
+// const DEFAULT_CACHE_TTL = 1 * 60;
 
 export const redis = {
 	client: redisClient,
 
 	// Set value with TTL
-	async set(key: string, value: any, ttl = DEFAULT_CACHE_TTL): Promise<void> {
+	async set(key: string, value: any, ttl = appConfig.redis.cacheDuration): Promise<void> {
 		try {
 			await redisClient.set(key, JSON.stringify(value), 'EX', ttl);
 		} catch (error) {

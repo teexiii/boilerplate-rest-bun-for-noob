@@ -1,10 +1,10 @@
-import AppConfig from '@/config/AppConfig';
+import appConfig from '@/config/appConfig';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 dayjs.extend(utc);
 dayjs.extend(timezone);
-dayjs.tz.setDefault(AppConfig.tz);
+dayjs.tz.setDefault(appConfig.tz);
 
 export const Environment = {
 	PRODUCTION: 'production',
@@ -14,22 +14,8 @@ export const Environment = {
 	LOCAL: 'local',
 };
 
-export const IsDev = () => {
-	return AppConfig.env === Environment.DEVELOPMENT;
-};
-
-export const IsStag = () => {
-	return AppConfig.env === Environment.STAGING;
-};
-
-export const IsProd = () => {
-	return AppConfig.env === Environment.PRODUCTION;
-};
-
-export const IsCanary = () => {
-	return AppConfig.env === Environment.CANARY;
-};
-
-export const IsLocal = () => {
-	return AppConfig.env === Environment.LOCAL;
-};
+export const isDev = appConfig.env === Environment.DEVELOPMENT;
+export const isStag = appConfig.env === Environment.STAGING;
+export const isProd = appConfig.env === Environment.PRODUCTION;
+export const isCanary = appConfig.env === Environment.CANARY;
+export const isLocal = appConfig.env === Environment.LOCAL || process.env.NODE_ENV === 'test';

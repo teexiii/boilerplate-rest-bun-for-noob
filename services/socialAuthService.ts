@@ -9,8 +9,9 @@ import { userRepo } from '@/repositories/userRepo';
 import { roleService } from '@/services/roleService';
 import type { AuthResponse } from '@/types/auth';
 import type { SocialAuthInput, SocialProfile } from '@/types/socialAuth';
-import { toUserReponse } from '@/types/user';
+import { toUserReponse, type UserSocials } from '@/types/user';
 import { randomUUIDv7 } from 'bun';
+import { refreshTokenService } from '@/services/refreshTokenService';
 
 export const socialAuthService = {
 	/**
@@ -39,7 +40,7 @@ export const socialAuthService = {
 
 		// If user doesn't exist but we have an email, check if email is already registered
 		if (!user && socialProfile.email) {
-			user = await userRepo.findByEmail(socialProfile?.email);
+			user = (await userRepo.findByEmail(socialProfile.email)) as any;
 		}
 
 		// If user doesn't exist, create a new one
@@ -63,6 +64,8 @@ export const socialAuthService = {
 					password: '', // No password for social login users
 					name: socialProfile.name || baseUsername,
 					roleId: defaultRole.id,
+					emailVerified: true,
+					emailVerifiedAt: new Date(),
 					socials: {
 						create: {
 							provider: input.provider,
@@ -92,26 +95,22 @@ export const socialAuthService = {
 			});
 		}
 
+		if (!user?.emailVerified)
+			await db.user.update({
+				where: { id: user.id },
+				data: {
+					emailVerified: true,
+					emailVerifiedAt: new Date(),
+				},
+			});
+
 		// Generate tokens
-		const accessToken = generateAccessToken(user);
+		const accessToken = await generateAccessToken(user);
 
-		// Create refresh token in DB and get the ID
-		const refreshTokenId = await refreshTokenRepo.create(
-			user.id,
-			randomUUIDv7() // Will be updated after generation
-		);
-
-		// Generate refresh token with ID
-		const refreshToken = generateRefreshToken(user, refreshTokenId);
-
-		// Update the token string in the database
-		await db.refreshToken.update({
-			where: { id: refreshTokenId },
-			data: { token: refreshToken },
-		});
+		const refreshToken = await refreshTokenService.generateRefreshTokenByUser(user);
 
 		return {
-			session: { accessToken, refreshToken },
+			session: { accessToken, refreshToken: refreshToken.token },
 			user: toUserReponse(user),
 		};
 	},
