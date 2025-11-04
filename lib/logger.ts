@@ -1,6 +1,6 @@
 import pino from 'pino';
-import { IsProd } from '@/config';
 import env from '@/config/env';
+import { isProd } from '@/config';
 
 const transport = {
 	target: 'pino-pretty',
@@ -13,7 +13,7 @@ const transport = {
 
 export const logger = pino({
 	level: env('LOGGER_LEVEL', true, 'info'),
-	transport: IsProd() ? undefined : transport,
+	transport: isProd ? undefined : transport,
 });
 
 // Override console methods
@@ -21,7 +21,7 @@ const originalConsole = { ...console };
 
 console.log = (...args) => {
 	logger.info(...args);
-	if (!IsProd()) {
+	if (!isProd) {
 		originalConsole.log(...args);
 	}
 };
@@ -33,21 +33,21 @@ console.error = (...args) => {
 
 console.warn = (...args) => {
 	logger.warn(...args);
-	if (!IsProd()) {
+	if (!isProd) {
 		originalConsole.warn(...args);
 	}
 };
 
 console.info = (...args) => {
 	logger.info(...args);
-	if (!IsProd()) {
+	if (!isProd) {
 		originalConsole.info(...args);
 	}
 };
 
 console.debug = (...args) => {
 	logger.debug(...args);
-	if (!IsProd()) {
+	if (!isProd) {
 		originalConsole.debug(...args);
 	}
 };

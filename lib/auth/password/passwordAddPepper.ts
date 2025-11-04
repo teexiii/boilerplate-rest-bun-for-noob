@@ -1,5 +1,5 @@
-import AppConfig from '@/config/AppConfig';
+import appConfig from '@/config/appConfig';
 
 export default function passwordAddPepper(password: string) {
-	return `${password}${AppConfig.auth.passwordPepperSecret}`;
+	return `${password}${appConfig.auth.passwordPepperSecret}`;
 }

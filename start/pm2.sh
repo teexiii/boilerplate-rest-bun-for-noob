@@ -15,3 +15,9 @@ pm2 start --interpreter=bun index.ts --name boilerplate-bun-for-noob
 
 # Save the pm2 configuration
 pm2 save
+
+
+
+
+
+

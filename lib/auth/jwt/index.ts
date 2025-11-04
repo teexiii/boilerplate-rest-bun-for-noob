@@ -1,77 +1,77 @@
-import jwt from 'jsonwebtoken';
-import { JsonWebTokenError, NotBeforeError, TokenExpiredError } from 'jsonwebtoken';
+import { SignJWT, jwtVerify, errors } from 'jose';
 import type { TokenPayload, RefreshTokenPayload } from '@/types/auth';
 import type { UserWithRole } from '@/types/user';
-import AppConfig from '@/config/AppConfig';
+import appConfig from '@/config/appConfig';
 
-export function generateAccessToken(user: UserWithRole): string {
+// Convert secrets to Uint8Array for jose
+const accessTokenSecret = new TextEncoder().encode(appConfig.jwt.accessTokenSecret);
+const refreshTokenSecret = new TextEncoder().encode(appConfig.jwt.refreshTokenSecret);
+
+export async function generateAccessToken(user: UserWithRole): Promise<string> {
 	const payload: TokenPayload = {
 		userId: user.id,
 		roleId: user.roleId,
 		roleName: user.role.name,
 	};
-	return jwt.sign(payload, AppConfig.jwt.accessTokenSecret, {
-		expiresIn: AppConfig.jwt.accessTokenExpiresIn,
-	});
+
+	return await new SignJWT(payload as any)
+		.setProtectedHeader({ alg: 'HS512' })
+		.setExpirationTime(appConfig.jwt.accessTokenExpiresIn)
+		.sign(accessTokenSecret);
 }
 
-export function generateRefreshToken(user: UserWithRole, tokenId: string): string {
+export async function generateRefreshToken(user: UserWithRole, tokenId: string): Promise<string> {
 	const payload: RefreshTokenPayload = {
 		tokenId,
 		userId: user.id,
 	};
 
-	return jwt.sign(payload, AppConfig.jwt.refreshTokenSecret, {
-		expiresIn: AppConfig.jwt.refreshTokenExpiresIn,
-	});
+	return await new SignJWT(payload as any)
+		.setProtectedHeader({ alg: 'HS512' })
+		.setExpirationTime(appConfig.jwt.refreshTokenExpiresIn)
+		.sign(refreshTokenSecret);
 }
 
-export function verifyAccessToken(token: string): Promise<TokenPayload> {
-	return new Promise((resolve, reject) => {
-		jwt.verify(token, AppConfig.jwt.accessTokenSecret, (err: unknown, decoded: unknown) => {
-			if (err) {
-				// Handle specific types of JWT errors
-				if (err instanceof TokenExpiredError) {
-					reject({
-						cause: 'TOKEN_EXPIRED',
-						message: 'Access token has expired',
-						expiredAt: err.expiredAt,
-					});
-				} else if (err instanceof JsonWebTokenError) {
-					reject({
-						cause: 'TOKEN_INVALID',
-						message: 'Invalid access token',
-						details: err.message,
-					});
-				} else if (err instanceof NotBeforeError) {
-					reject({
-						cause: 'TOKEN_NOT_ACTIVE',
-						message: 'Token not yet active',
-						date: err.date,
-					});
-				} else {
-					// Generic error for unexpected cases
-					reject({
-						cause: 'TOKEN_ERROR',
-						message: 'Error verifying access token',
-						error: err,
-					});
-				}
-			} else {
-				resolve(decoded as TokenPayload);
-			}
-		});
-	});
+export async function verifyAccessToken(token: string): Promise<TokenPayload> {
+	try {
+		const { payload } = await jwtVerify(token, accessTokenSecret);
+		return payload as unknown as TokenPayload;
+	} catch (err) {
+		// Handle specific types of JWT errors
+		if (err instanceof errors.JWTExpired) {
+			throw {
+				cause: 'TOKEN_EXPIRED',
+				message: 'Access token has expired',
+				expiredAt: err.claim,
+			};
+		} else if (err instanceof errors.JWTInvalid) {
+			throw {
+				cause: 'TOKEN_INVALID',
+				message: 'Invalid access token',
+				details: err.message,
+			};
+		} else if (err instanceof errors.JWTClaimValidationFailed) {
+			throw {
+				cause: 'TOKEN_NOT_ACTIVE',
+				message: 'Token not yet active',
+				details: err.message,
+			};
+		} else {
+			// Generic error for unexpected cases
+			throw {
+				cause: 'TOKEN_ERROR',
+				message: 'Error verifying access token',
+				error: err,
+			};
+		}
+	}
 }
 
-export function verifyRefreshToken(token: string): Promise<RefreshTokenPayload> {
-	return new Promise((resolve, reject) => {
-		jwt.verify(token, AppConfig.jwt.refreshTokenSecret, (err: unknown, decoded: unknown) => {
-			if (err) {
-				reject(err);
-			} else {
-				resolve(decoded as RefreshTokenPayload);
-			}
-		});
-	});
+export async function verifyRefreshToken(token: string): Promise<RefreshTokenPayload> {
+	try {
+		const { payload } = await jwtVerify(token, refreshTokenSecret);
+		return payload as unknown as RefreshTokenPayload;
+	} catch (err) {
+		throw err;
+	}
 }

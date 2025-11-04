@@ -1,14 +1,30 @@
 import env from '@/config/env';
+import dayjs from 'dayjs';
 import { toInt } from 'diginext-utils/dist/object';
 import type { StringValue } from 'ms';
 
-const AppConfig = {
+const appConfig = {
 	port: parseInt(process.env.PORT || '3000', 10),
 	env: env('ENV', true, process.env.NODE_ENV),
 	tz: env('TZ', true, 'Asia/Ho_Chi_Minh'),
 	title: process.env.TITLE,
 	database: {
 		url: env('DATABASE_URL', false),
+	},
+
+	normalize(str: string) {
+		try {
+			let result = str;
+			if (result?.endsWith('/')) result = result.slice(0, -1);
+			if (!result?.startsWith('/')) result = `/${result}`;
+			return result;
+		} catch (error) {
+			throw new Error(`normalize  failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+		}
+	},
+
+	mail: {
+		from: env('MAIL_FROM', true, 'noreply@ult.vn'),
 	},
 
 	auth: {
@@ -24,6 +40,7 @@ const AppConfig = {
 
 	redis: {
 		// redis[s]://[[username][:password]@][host][:port][/db-number]
+		cacheDuration: env('REDIS_CACHE_DURATION', true, 60),
 		prov: env('REDIST_PROV', process.env.ENV == 'local', 'redis://'),
 		host: env('REDIS_HOST', process.env.ENV == 'local', '127.0.0.1'),
 		port: toInt(env('REDIS_PORT', process.env.ENV == 'local', 6379)),
@@ -37,31 +54,31 @@ const AppConfig = {
 		},
 	},
 
-	getBaseUrl: (url = '') => {
-		// remove it if config trailingSlash: true, on next.config
-		if (url?.endsWith('/')) url = url.slice(0, -1);
-		if (!url?.startsWith('/')) url = `/${url}`;
+	getWebappUrl(url = '') {
+		url = appConfig.normalize(url);
+		return `${env('WEBAPP_URL', false, '')}${url}`;
+	},
 
+	getBaseUrl: (url = '') => {
+		url = appConfig.normalize(url);
 		return `${env('BASE_URL', true, '')}${url}`;
 	},
 
-	getCdn: (url = '') => {
-		if (url?.endsWith('/')) url = url.slice(0, -1);
-		if (!url?.startsWith('/')) url = `/${url}`;
-
-		return `${env('UPFILE_BEST_FILE_SERVE', false)}/file${url}`;
+	upfileBest: {
+		getUploadUrl(url = '') {
+			url = appConfig.normalize(url);
+			return `${env('UPFILE_BEST_UPLOAD', false)}${url}`;
+		},
+		getUploadDir(url = '') {
+			const YYYYMMDD = dayjs().format('YY/MM/DD/HH/mm');
+			url = appConfig.normalize(url);
+			return `${env('UPFILE_BEST_UPLOAD_DIR_PATH', false)}/upload/${YYYYMMDD}${url}`;
+		},
+		getCdn(url = '') {
+			url = appConfig.normalize(url);
+			return `${env('UPFILE_BEST_FILE_SERVE', false)}/file${url}`;
+		},
 	},
-	getUpfileBestUpload: (url = '') => {
-		if (url?.endsWith('/')) url = url.slice(0, -1);
-		if (!url?.startsWith('/')) url = `/${url}`;
-		return `${env('UPFILE_BEST_UPLOAD', false)}${url}`;
-	},
-	getUploadDirPath: (path?: string) => {
-		if (path?.endsWith('/')) path = path.slice(0, -1);
-		if (!path?.startsWith('/')) path = `/${path}`;
+} as const;
 
-		return `${env('UPFILE_BEST_UPLOAD_DIR_PATH', false)}${path ? path : ''}`;
-	},
-};
-
-export default AppConfig;
+export default appConfig;

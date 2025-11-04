@@ -7,6 +7,11 @@ export async function errorHandler<Args extends any[], Return>(fn: (...args: Arg
 		} catch (error: any) {
 			console.error('Error:', error);
 
+			// Handle JSON parsing errors
+			if (error instanceof SyntaxError && error.message.includes('JSON')) {
+				return fail400('Invalid JSON in request body');
+			}
+
 			if (typeof error?.cause != 'undefined')
 				return fail(`${error instanceof Error ? error.message : 'Unknown error'}`, error?.cause);
 

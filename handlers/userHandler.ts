@@ -3,7 +3,6 @@ import { errorHandler } from '@/middleware/error';
 import { userService } from '@/services/userService';
 import type { AuthenticatedRequest, RouteParams } from '@/types/auth';
 import { toUserReponse } from '@/types/user';
-import tokenCache from '@/caching/controller/token';
 import { AppRoleDefault } from '@/data';
 
 export const userHandler = {
@@ -119,14 +118,8 @@ export const userHandler = {
 			if (!req.user) {
 				return fail401('Authentication required');
 			}
-
-			// Get user from database
+			// Get user from database (cached via userRepo)
 			const user = await userService.getUserById(req.user.id);
-
-			await tokenCache.setByHeader(req.headers, {
-				...req.user,
-				...user,
-			});
 
 			return success({ data: toUserReponse(user) });
 		}),
@@ -141,11 +134,8 @@ export const userHandler = {
 			}
 
 			const data = await req.json();
+			// userService.updateUser already invalidates cache via userRepo
 			const updatedUser = await userService.updateUser(req.user.id, data);
-			await tokenCache.setByHeader(req.headers, {
-				...req.user,
-				...updatedUser,
-			});
 
 			return success({ data: toUserReponse(updatedUser) });
 		}),

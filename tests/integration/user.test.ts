@@ -1,4 +1,3 @@
-import tokenCache from '@/caching/controller/token';
 import { AppRoleDefault } from '@/data';
 import { db } from '@/lib/server/db';
 import { generateAccessToken } from '@/lib/auth/jwt';
@@ -114,8 +113,8 @@ describe('User API Integration Tests', () => {
 		adminId = admin.id;
 		userId = user.id;
 
-		adminToken = generateAccessToken(admin);
-		userToken = generateAccessToken(user);
+		adminToken = await generateAccessToken(admin);
+		userToken = await generateAccessToken(user);
 	});
 
 	afterAll(async () => {
@@ -344,14 +343,11 @@ describe('User API Integration Tests', () => {
 				body: JSON.stringify(newProfile),
 			});
 
-			const userInCache = await tokenCache.get(userToken);
-
 			expect(response.status).toBe(200);
 			const res = await response.json();
 			const data = res.data;
 
 			expect(data.name).toBe(newProfile.name);
-			expect(userInCache?.name).toBe(newProfile.name);
 			expect(data.password).toBeUndefined();
 		});
 

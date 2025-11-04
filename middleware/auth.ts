@@ -2,7 +2,6 @@ import { fail, fail400, fail401, fail403 } from '@/lib/response';
 import { verifyAccessToken } from '@/lib/auth/jwt';
 import { userRepo } from '@/repositories/userRepo';
 import type { AuthenticatedRequest, RouteParams, TokenPayload } from '@/types/auth';
-import tokenCache from '@/caching/controller/token';
 import { AppRoleDefault } from '@/data';
 import dayjs from 'dayjs';
 
@@ -46,24 +45,18 @@ export const checkTokenExpiringWithinDays = (payload: TokenPayload, day: number 
 };
 
 /**
- * Authenticate user from JWT token with Redis caching
+ * Authenticate user from JWT token
+ * User data is cached via userRepo (userCache)
  */
 export async function authenticate(req: AuthenticatedRequest, params: RouteParams): Promise<Response | null> {
 	try {
 		const token = getAccessTokenByHeader(req.headers);
 
-		const cachedUser = await tokenCache.get(token);
-		if (cachedUser) {
-			// Use cached user
-			req.user = cachedUser;
-			return null; // Continue to next middleware/handler
-		}
-
-		// Token not in cache, verify it
+		// Verify token
 		const payload = await verifyAccessToken(token);
-		const isTokenExpiringSoon = checkTokenExpiringWithinDays(payload, 27);
+		// const isTokenExpiringSoon = checkTokenExpiringWithinDays(payload, 27);
 
-		// Get user from database
+		// Get user from database (cached via userRepo -> userCache)
 		const user = await userRepo.findById(payload.userId);
 
 		if (!user) {
@@ -73,11 +66,9 @@ export async function authenticate(req: AuthenticatedRequest, params: RouteParam
 		// Attach user to request
 		req.user = {
 			...user,
-			isTokenExpiringSoon,
+			// isTokenExpiringSoon,
 			isAdmin: user?.role.name == AppRoleDefault.ADMIN,
 		};
-
-		await tokenCache.set(token, req.user);
 
 		return null; // Continue to next middleware/handler
 	} catch (error) {

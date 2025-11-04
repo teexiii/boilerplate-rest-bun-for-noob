@@ -1,4 +1,5 @@
-import type { User, Role } from '@prisma/client';
+import type { User, Role, Social } from '@prisma/client';
+import { toBool } from 'diginext-utils/dist/object';
 
 // Add this interface to represent user social logins
 export interface SocialInfo {
@@ -8,6 +9,10 @@ export interface SocialInfo {
 	email?: string;
 	profileData?: Record<string, any>;
 }
+
+export type UserSocials = UserWithRole & {
+	socials?: Social[];
+};
 
 export type UserWithRole = User & {
 	role: Role;
@@ -30,6 +35,7 @@ export interface UserResponse {
 	id: string;
 	email: string;
 	name: string | null;
+	emailVerified: boolean;
 	role: {
 		id: string;
 		name: string;
@@ -41,20 +47,13 @@ export interface UserResponse {
 	createdAt: Date;
 }
 
-export const toUserReponse = (
-	user: User & {
-		role: Pick<Role, 'id' | 'name'>;
-		socials?: {
-			provider: string;
-			email: string | null;
-		}[];
-	}
-): UserResponse => {
+export const toUserReponse = (user: UserSocials): UserResponse => {
 	try {
 		return {
 			id: user.id,
 			email: user.email,
 			name: user.name || user.email,
+			emailVerified: toBool(user.emailVerified),
 			role: {
 				name: user.role.name,
 				id: user.role.id,

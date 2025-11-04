@@ -98,6 +98,8 @@ async function main() {
 					email,
 					name: 'Admin',
 					roleId: adminRole.id,
+					emailVerified: true,
+					emailVerifiedAt: new Date(),
 				},
 			});
 		}

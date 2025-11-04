@@ -1,15 +1,15 @@
-import AppConfig from '@/config/AppConfig';
 import { fail500, fail } from '@/lib/response';
 import { matchRoute } from '@/lib/utils/router';
 import { routes } from '@/routes';
 import type { AuthenticatedRequest } from '@/types/auth';
 import { logger } from '@/lib/logger';
 import { requestLogger } from '@/middleware/logger';
+import appConfig from '@/config/appConfig';
 
 (async () => {
 	// Setup Bun server
 	const server = Bun.serve({
-		port: AppConfig.port,
+		port: appConfig.port,
 		async fetch(req: Request) {
 			// const url = new URL(req.url);
 			const method = req.method;
