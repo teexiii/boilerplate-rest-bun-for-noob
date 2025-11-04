@@ -43,26 +43,136 @@ export const verificationTokenRepo = {
 	 * Find verification token by token string
 	 */
 	async findByToken(token: string) {
-		return db.verificationToken.findUnique({
-			where: { token },
-			include: { user: { include: { role: true } } },
-		});
+		const result = await db.$queryRaw<any[]>`
+			SELECT
+				vt.id,
+				vt.token,
+				vt.type,
+				vt.user_id as "userId",
+				vt.expires_at as "expiresAt",
+				vt.created_at as "createdAt",
+				vt.used_at as "usedAt",
+				u.id as "user.id",
+				u.email as "user.email",
+				u.phone as "user.phone",
+				u.name as "user.name",
+				u.image as "user.image",
+				u.email_verified as "user.emailVerified",
+				u.email_verified_at as "user.emailVerifiedAt",
+				u.role_id as "user.roleId",
+				u.created_at as "user.createdAt",
+				u.updated_at as "user.updatedAt",
+				r.id as "user.role.id",
+				r.name as "user.role.name",
+				r.description as "user.role.description",
+				r.created_at as "user.role.createdAt",
+				r.updated_at as "user.role.updatedAt"
+			FROM verification_tokens vt
+			INNER JOIN users u ON vt.user_id = u.id
+			INNER JOIN roles r ON u.role_id = r.id
+			WHERE vt.token = ${token}
+		`;
+
+		if (result.length === 0) return null;
+
+		const row = result[0];
+		return {
+			id: row.id,
+			token: row.token,
+			type: row.type,
+			userId: row.userId,
+			expiresAt: row.expiresAt,
+			createdAt: row.createdAt,
+			usedAt: row.usedAt,
+			user: {
+				id: row['user.id'],
+				email: row['user.email'],
+				phone: row['user.phone'],
+				name: row['user.name'],
+				image: row['user.image'],
+				emailVerified: row['user.emailVerified'],
+				emailVerifiedAt: row['user.emailVerifiedAt'],
+				roleId: row['user.roleId'],
+				createdAt: row['user.createdAt'],
+				updatedAt: row['user.updatedAt'],
+				role: {
+					id: row['user.role.id'],
+					name: row['user.role.name'],
+					description: row['user.role.description'],
+					createdAt: row['user.role.createdAt'],
+					updatedAt: row['user.role.updatedAt'],
+				},
+			},
+		};
 	},
 
 	/**
 	 * Find valid (unused and not expired) token by token string
 	 */
 	async findValidToken(token: string) {
-		return db.verificationToken.findFirst({
-			where: {
-				token,
-				usedAt: null,
-				expiresAt: {
-					gt: new Date(),
+		const result = await db.$queryRaw<any[]>`
+			SELECT
+				vt.id,
+				vt.token,
+				vt.type,
+				vt.user_id as "userId",
+				vt.expires_at as "expiresAt",
+				vt.created_at as "createdAt",
+				vt.used_at as "usedAt",
+				u.id as "user.id",
+				u.email as "user.email",
+				u.phone as "user.phone",
+				u.name as "user.name",
+				u.image as "user.image",
+				u.email_verified as "user.emailVerified",
+				u.email_verified_at as "user.emailVerifiedAt",
+				u.role_id as "user.roleId",
+				u.created_at as "user.createdAt",
+				u.updated_at as "user.updatedAt",
+				r.id as "user.role.id",
+				r.name as "user.role.name",
+				r.description as "user.role.description",
+				r.created_at as "user.role.createdAt",
+				r.updated_at as "user.role.updatedAt"
+			FROM verification_tokens vt
+			INNER JOIN users u ON vt.user_id = u.id
+			INNER JOIN roles r ON u.role_id = r.id
+			WHERE vt.token = ${token}
+			AND vt.used_at IS NULL
+			AND vt.expires_at > NOW()
+		`;
+
+		if (result.length === 0) return null;
+
+		const row = result[0];
+		return {
+			id: row.id,
+			token: row.token,
+			type: row.type,
+			userId: row.userId,
+			expiresAt: row.expiresAt,
+			createdAt: row.createdAt,
+			usedAt: row.usedAt,
+			user: {
+				id: row['user.id'],
+				email: row['user.email'],
+				phone: row['user.phone'],
+				name: row['user.name'],
+				image: row['user.image'],
+				emailVerified: row['user.emailVerified'],
+				emailVerifiedAt: row['user.emailVerifiedAt'],
+				roleId: row['user.roleId'],
+				createdAt: row['user.createdAt'],
+				updatedAt: row['user.updatedAt'],
+				role: {
+					id: row['user.role.id'],
+					name: row['user.role.name'],
+					description: row['user.role.description'],
+					createdAt: row['user.role.createdAt'],
+					updatedAt: row['user.role.updatedAt'],
 				},
 			},
-			include: { user: { include: { role: true } } },
-		});
+		};
 	},
 
 	/**

@@ -183,3 +183,5 @@ claude.ps1
 .claude*
 
 prisma/backups
+
+.vscode/settings.json
