@@ -109,13 +109,13 @@ async function main() {
 
 	const admin = await findOrCreateAdmin(env('ADMIN_EMAIL_DEFAULT', false));
 
-	// Create users
-	console.log('Creating users...');
-	const users: Record<string, any> = {};
-	for (const userData of defaultUsers) {
-		const roleId = viewerRole.id!;
-		users[userData.email] = await findOrCreateUser(userData, roleId);
-	}
+	// // Create users
+	// console.log('Creating users...');
+	// const users: Record<string, any> = {};
+	// for (const userData of defaultUsers) {
+	// 	const roleId = viewerRole.id!;
+	// 	users[userData.email] = await findOrCreateUser(userData, roleId);
+	// }
 
 	console.log('Seed done');
 }
