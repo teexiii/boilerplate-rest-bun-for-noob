@@ -1,0 +1,104 @@
+# File Paths Reference - DaiPhatXanh API
+
+## ROUTES Layer
+.\routes\
+  - index.ts                 (Aggregates all routes)
+  - authRoutes.ts
+  - defaultRoutes.ts
+  - oauthCallbackRoutes.ts
+  - roleRoutes.ts
+  - socialAuthRoutes.ts
+  - userRoutes.ts
+
+## HANDLERS Layer
+.\handlers\
+  - authHandler.ts
+  - oauthCallbackHandler.ts
+  - roleHandler.ts
+  - socialAuthHandler.ts
+  - userHandler.ts
+
+## SERVICES Layer
+.\services\
+  - authService.ts
+  - emailService.ts
+  - emailService.test.ts
+  - frontendAuthService.ts
+  - refreshTokenService.ts
+  - roleService.ts
+  - socialAuthService.ts
+  - userService.ts
+
+## REPOSITORIES Layer
+.\repositories\
+  - genreRepo.ts
+  - refreshTokenRepo.ts
+  - roleRepo.ts
+  - songSessionRepo.ts
+  - userRepo.ts
+  - verificationTokenRepo.ts
+  - vibeRepo.ts
+  - README.md
+
+## TYPES Layer
+.\types\
+  - auth.ts
+  - index.ts
+  - role.ts
+  - socialAuth.ts
+  - user.ts
+
+## TESTS Layer
+.\tests\
+  - integration/auth.test.ts
+  - integration/oauthCallback.test.ts
+  - integration/role.test.ts
+  - integration/socialAuth.test.ts
+  - integration/user.test.ts
+  - README.md
+
+## MIDDLEWARE Layer
+.\middleware\
+  - auth.ts
+  - error.ts
+  - logger.ts
+  - security.ts
+
+## UTILITIES
+.\lib\
+  - auth/jwt/index.ts       (Token generation/verification)
+  - auth/jwt/time.ts
+  - auth/password/checkCorrectPassword.ts
+  - auth/password/hashPassword.ts
+  - auth/password/index.ts
+  - auth/password/passwordAddPepper.ts
+  - auth/social/socialFetch.ts
+  - response/index.ts       (success, fail400, fail401, etc.)
+  - response/songSession.ts
+  - server/db/index.ts      (Prisma client)
+  - utils/mongo-id.ts
+  - utils/port.ts
+  - utils/router.ts
+  - utils/uuid.ts
+  - logger.ts
+
+## CACHING
+.\caching\
+  - redis.ts
+  - userCache.ts
+
+## CONFIGURATION
+.\config\
+  - AppConfig.ts
+  - env.ts
+  - index.ts
+
+## DATABASE
+.\prisma\
+  - schema.prisma
+  - seed.ts
+  - migrations/
+
+## ENTRY POINT
+.\index.ts
+

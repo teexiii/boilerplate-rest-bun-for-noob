@@ -25,6 +25,8 @@ async function sendEmail(options: SendEmailOptions): Promise<void> {
 		`To: ${options.to}`,
 		`Subject: ${options.subject}`,
 		`Content-Type: ${options.html ? 'text/html' : 'text/plain'}; charset=UTF-8`,
+		`MIME-Version: 1.0`,
+		`Content-Transfer-Encoding: 8bit`,
 		'',
 		options.html || options.text,
 	].join('\n');

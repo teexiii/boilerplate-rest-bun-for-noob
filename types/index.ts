@@ -1,3 +1,8 @@
+// Export all types
+export * from './auth';
+export * from './role';
+export * from './socialAuth';
+
 /**
  * Generic validator class factory that creates runtime validators for TypeScript interfaces
  */

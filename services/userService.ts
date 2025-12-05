@@ -147,7 +147,6 @@ export const userService = {
 	// searchPublicUsers
 	async searchPublicUsers(query: string, page = 1, limit = 30) {
 		//TODO search public user
-		console.log('?user/search');
 		const offset = (page - 1) * limit;
 
 		const [users, total] = await Promise.all([

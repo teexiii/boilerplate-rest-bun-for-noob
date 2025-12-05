@@ -47,7 +47,7 @@ export interface UserResponse {
 	createdAt: Date;
 }
 
-export const toUserReponse = (user: UserSocials): UserResponse => {
+export const toUserReponse = (user: Omit<UserSocials, 'password'>): UserResponse => {
 	try {
 		return {
 			id: user.id,
