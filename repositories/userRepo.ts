@@ -380,7 +380,7 @@ export const userRepo = {
 	/**
 	 * Create a new user
 	 */
-	async create(data: UserCreateInput): Promise<IUser> {
+	async create(data: UserCreateInput) {
 		const user = await db.user.create({
 			data,
 			include,
@@ -395,7 +395,7 @@ export const userRepo = {
 	/**
 	 * Update a user
 	 */
-	async update(id: string, data: UserUpdateInput): Promise<IUser> {
+	async update(id: string, data: UserUpdateInput) {
 		const user = await db.user.update({
 			where: { id },
 			data,
@@ -411,7 +411,7 @@ export const userRepo = {
 	/**
 	 * Update user password
 	 */
-	async updatePassword(id: string, password: string): Promise<IUser> {
+	async updatePassword(id: string, password: string) {
 		const user = await db.user.update({
 			where: { id },
 			data: { password },
@@ -503,7 +503,7 @@ export const userRepo = {
 	/**
 	 * Mark user email as verified
 	 */
-	async markEmailAsVerified(id: string): Promise<IUser> {
+	async markEmailAsVerified(id: string) {
 		const user = await db.user.update({
 			where: { id },
 			data: {
@@ -522,7 +522,7 @@ export const userRepo = {
 	/**
 	 * Update user email
 	 */
-	async updateEmail(id: string, email: string): Promise<IUser> {
+	async updateEmail(id: string, email: string) {
 		// Get old email first to clear cache
 		const oldUser = await db.user.findUnique({ where: { id }, select: { email: true } });
 

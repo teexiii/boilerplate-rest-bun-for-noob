@@ -54,6 +54,13 @@ const appConfig = {
 		},
 	},
 
+	route: {
+		home(path: string) {
+			path = appConfig.normalize(path);
+			return appConfig.getWebappUrl(`/${path}`);
+		},
+	},
+
 	getWebappUrl(url = '') {
 		url = appConfig.normalize(url);
 		return `${env('WEBAPP_URL', false, '')}${url}`;

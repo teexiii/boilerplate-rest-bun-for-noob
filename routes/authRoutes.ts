@@ -1,5 +1,6 @@
 import { authHandler } from '@/handlers/authHandler';
 import { authenticate } from '@/middleware/auth';
+import { requireHash } from '@/middleware/security';
 import type { Route } from '@/types/auth';
 
 export const authRoutes: Route[] = [
@@ -7,16 +8,19 @@ export const authRoutes: Route[] = [
 	{
 		path: '/api/auth/register',
 		method: 'POST',
+		middleware: [requireHash],
 		handler: authHandler.register,
 	},
 	{
 		path: '/api/auth/login',
 		method: 'POST',
+		middleware: [requireHash],
 		handler: authHandler.login,
 	},
 	{
 		path: '/api/auth/admin/login',
 		method: 'POST',
+		middleware: [requireHash],
 		handler: authHandler.adminLogin,
 	},
 
@@ -24,6 +28,7 @@ export const authRoutes: Route[] = [
 	{
 		path: '/api/auth/refresh',
 		method: 'POST',
+		middleware: [requireHash],
 		handler: authHandler.refreshToken,
 	},
 	{
@@ -43,11 +48,13 @@ export const authRoutes: Route[] = [
 	{
 		path: '/api/auth/verify-email',
 		method: 'POST',
+		middleware: [requireHash],
 		handler: authHandler.verifyEmail,
 	},
 	{
 		path: '/api/auth/resend-verification',
 		method: 'POST',
+		middleware: [requireHash],
 		handler: authHandler.resendVerificationEmail,
 	},
 	{
@@ -59,11 +66,13 @@ export const authRoutes: Route[] = [
 	{
 		path: '/api/auth/check-token',
 		method: 'POST',
+		middleware: [requireHash],
 		handler: authHandler.checkVerificationToken,
 	},
 	{
 		path: '/api/auth/check-rate-limit',
 		method: 'POST',
+		middleware: [requireHash],
 		handler: authHandler.checkRateLimit,
 	},
 
@@ -71,11 +80,13 @@ export const authRoutes: Route[] = [
 	{
 		path: '/api/auth/forgot-password',
 		method: 'POST',
+		middleware: [requireHash],
 		handler: authHandler.forgotPassword,
 	},
 	{
 		path: '/api/auth/reset-password',
 		method: 'POST',
+		middleware: [requireHash],
 		handler: authHandler.resetPassword,
 	},
 	{

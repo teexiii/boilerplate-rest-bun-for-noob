@@ -19,45 +19,14 @@ RUN npm i -g bun
 COPY package.json prisma ./
 RUN VERSION=$(node -p "require('./package.json').version") 
 
-RUN bun install
+RUN bun install --force
 
 # ===================================
 #       PHASE 2 - BUILDER
 # ===================================
 FROM node:${NODE_VERSION} AS builder
 
-# Set build-time variables
-ARG BUILD_VERSION
-ARG NODE_ENV=production
-
-# Set environment variables
-ENV NODE_ENV=${NODE_ENV} \
-  NODE_OPTIONS=--max_old_space_size=8192
-
-WORKDIR /app
-
-# Copy dependencies from deps stage
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-COPY ./.env.dev ./.env
-
 RUN npm i -g bun
-
-# Build application
-RUN npm run build
-
-# Install and run node-prune (using native npx for better compatibility)
-RUN npx -y node-prune
-
-
-# ===================================
-#       PHASE 4 - RUNNER
-# ===================================
-FROM node:${NODE_VERSION}-alpine${ALPINE_VERSION} AS runner
-
-# Install production dependencies
-RUN apk add --no-cache \
-  tini~=0.19.0
 
 # Create non-root user and group
 RUN addgroup --system --gid 1001 nodejs \
@@ -69,12 +38,8 @@ WORKDIR /usr/app
 
 # Copy application files with explicit ownership
 COPY --from=deps --chown=user:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=user:nodejs /app/package.json ./
-COPY --from=builder --chown=user:nodejs /app/dist ./dist
-COPY --from=builder --chown=user:nodejs /app/prisma ./prisma
-COPY --from=builder --chown=user:nodejs /app/.env ./
-
-RUN npm i -g bun
+COPY . .
+COPY ./.env.dev ./.env
 
 # Switch to non-root user
 USER user
@@ -83,9 +48,6 @@ USER user
 EXPOSE 3000
 
 ENV NODE_ENV=production
-
-# Use Tini as init system
-ENTRYPOINT ["/sbin/tini", "--"]
 
 # Start the application with explicit host binding
 CMD ["bun", "run", "start"]

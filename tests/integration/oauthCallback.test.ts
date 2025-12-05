@@ -147,7 +147,7 @@
 
 // 		// Verify socialAuthService.social was called with the right params
 // 		expect(mockSocial).toHaveBeenCalledTimes(1);
-// 		const callArgs = mockSocial.mock.calls[0][0];
+// 		const callArgs = mockSocial.mock.calls[0]?.[0];
 // 		expect(callArgs.provider).toBe(SocialProvider.GOOGLE);
 // 		expect(callArgs.accessToken).toBe(mockAccessToken);
 // 	});
@@ -172,7 +172,7 @@
 
 // 		// Verify socialAuthService.social was called with the right params
 // 		expect(mockSocial).toHaveBeenCalledTimes(1);
-// 		const callArgs = mockSocial.mock.calls[0][0];
+// 		const callArgs = mockSocial.mock.calls[0]?.[0];
 // 		expect(callArgs.provider).toBe(SocialProvider.FACEBOOK);
 // 		expect(callArgs.accessToken).toBe(mockAccessToken);
 // 	});
@@ -192,7 +192,7 @@
 
 // 		// Verify socialAuthService.social was called with the right params
 // 		expect(mockSocial).toHaveBeenCalledTimes(1);
-// 		const callArgs = mockSocial.mock.calls[0][0];
+// 		const callArgs = mockSocial.mock.calls[0]?.[0];
 // 		expect(callArgs.provider).toBe(SocialProvider.DISCORD);
 // 	});
 
@@ -211,7 +211,7 @@
 
 // 		// Verify socialAuthService.social was called with the right params
 // 		expect(mockSocial).toHaveBeenCalledTimes(1);
-// 		const callArgs = mockSocial.mock.calls[0][0];
+// 		const callArgs = mockSocial.mock.calls[0]?.[0];
 // 		expect(callArgs.provider).toBe(SocialProvider.GITHUB);
 // 	});
 

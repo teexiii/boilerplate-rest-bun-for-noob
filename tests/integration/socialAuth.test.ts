@@ -195,7 +195,7 @@ describe('Social Auth API Integration Tests', () => {
 		});
 
 		expect(socials.length).toBe(1);
-		expect(socials[0].email).toBe(mockGoogleProfile.email);
+		expect(socials[0]?.email).toBe(mockGoogleProfile.email);
 	});
 
 	it('should register a new user with Facebook social login', async () => {
@@ -234,7 +234,7 @@ describe('Social Auth API Integration Tests', () => {
 		});
 
 		expect(socials.length).toBe(1);
-		expect(socials[0].email).toBe(mockFacebookProfile.email);
+		expect(socials[0]?.email).toBe(mockFacebookProfile.email);
 
 		// Test fetching the user's social logins
 		const socialLoginsResponse = await fetch(`${BASE_URL}/api/users/${userId}/social-logins`, {
@@ -247,7 +247,7 @@ describe('Social Auth API Integration Tests', () => {
 		const socialLoginsData = await socialLoginsResponse.json();
 		expect(socialLoginsData.data).toBeDefined();
 		expect(socialLoginsData.data.length).toBe(1);
-		expect(socialLoginsData.data[0].provider).toBe(SocialProvider.FACEBOOK);
+		expect(socialLoginsData.data[0]?.provider).toBe(SocialProvider.FACEBOOK);
 	});
 
 	it('should login existing user with social provider', async () => {
@@ -396,7 +396,7 @@ describe('Social Auth API Integration Tests', () => {
 
 		const socialLoginsData = await socialLoginsResponse.json();
 		expect(socialLoginsData.data.length).toBe(1);
-		expect(socialLoginsData.data[0].provider).toBe(SocialProvider.GOOGLE);
+		expect(socialLoginsData.data[0]?.provider).toBe(SocialProvider.GOOGLE);
 	});
 
 	it('should not allow unlinking the only social provider if user has no password', async () => {

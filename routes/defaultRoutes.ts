@@ -25,4 +25,12 @@ export const defaultRoutes: Route[] = [
 				return success({ data: 1 });
 			}),
 	},
+	{
+		path: '/api/hz',
+		method: 'GET',
+		handler: async (req: AuthenticatedRequest, params: RouteParams) =>
+			errorHandler(async () => {
+				return success({ data: 1 });
+			}),
+	},
 ];

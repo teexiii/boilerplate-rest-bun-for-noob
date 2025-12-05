@@ -1,3 +1,4 @@
+import { isLocal } from '@/config';
 import appConfig from '@/config/appConfig';
 import Redis from 'ioredis';
 
@@ -34,6 +35,8 @@ export const redis = {
 	// Get value
 	async get<T>(key: string): Promise<T | null> {
 		try {
+			if (isLocal) return null;
+
 			const data = await redisClient.get(key);
 			if (!data) return null;
 			return JSON.parse(data) as T;
@@ -60,6 +63,17 @@ export const redis = {
 			}
 		} catch (error) {
 			throw new Error(`REDIS_DEL_BY_PATTERN_FAILED: ${error instanceof Error ? error.message : 'Unknown error'}`);
+		}
+	},
+
+	// Set value only if it doesn't exist (atomic operation for replay attack prevention)
+	async setNX(key: string, value: any, ttl = appConfig.redis.cacheDuration): Promise<boolean> {
+		try {
+			const result = await redisClient.set(key, JSON.stringify(value), 'EX', ttl, 'NX');
+			// Redis returns 'OK' if set succeeded, null if key already exists
+			return result === 'OK';
+		} catch (error) {
+			throw new Error(`REDIS_SETNX_FAILED: ${error instanceof Error ? error.message : 'Unknown error'}`);
 		}
 	},
 };

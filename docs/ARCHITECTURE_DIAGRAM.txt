@@ -1,0 +1,314 @@
+RADIO API - 4-LAYER ARCHITECTURE PATTERN
+==========================================
+
+HTTP REQUEST
+     |
+     v
+[ROUTES LAYER] (/routes/*.ts)
+     |
+     | Defines endpoints, methods, middleware
+     v
+[HANDLERS LAYER] (/handlers/*.ts)
+     |
+     | Parses request, validates input
+     | Calls services, transforms response
+     v
+[SERVICES LAYER] (/services/*.ts)
+     |
+     | Business logic, validation
+     | Cross-repository orchestration
+     v
+[REPOSITORIES LAYER] (/repositories/*.ts)
+     |
+     | CRUD operations, queries, aggregations
+     | Caching, cache invalidation
+     v
+[DATABASE]
+(Prisma ORM + PostgreSQL/MongoDB)
+
+
+COMPLETE REQUEST FLOW EXAMPLE: GET /api/users/:id
+==================================================
+
+1. HTTP Request (GET /api/users/123)
+   |
+   v
+2. ROUTE MATCHING (routes/index.ts -> matchRoute)
+   |
+   v
+3. ROUTE DEFINITION (routes/userRoutes.ts)
+   {
+     path: '/api/users/:id',
+     method: 'GET',
+     middleware: [authenticate, requireSelfOrAdmin('id')],
+     handler: userHandler.getUserById
+   }
+   |
+   v
+4. MIDDLEWARE EXECUTION (middleware/auth.ts)
+   - authenticate(): Extract JWT, verify, attach user to request
+   - requireSelfOrAdmin(): Check authorization
+   |
+   v
+5. HANDLER (handlers/userHandler.ts)
+   getUserById: async (req, params) =>
+     errorHandler(async () => {
+       const user = await userService.getUserById(params.id);
+       return success({ data: toUserReponse(user) });
+     })
+   |
+   v
+6. SERVICE (services/userService.ts)
+   async getUserById(id: string) {
+     const user = await userRepo.findById(id);
+     if (!user) throw new Error('Not found', { cause: 404 });
+     return user;
+   }
+   |
+   v
+7. REPOSITORY (repositories/userRepo.ts)
+   async findById(id: string) {
+     return db.user.findUnique({
+       where: { id },
+       include: { role: true }
+     });
+   }
+   |
+   v
+8. PRISMA ORM (lib/server/db/index.ts)
+   db.user.findUnique(...)
+   |
+   v
+9. DATABASE
+   SELECT * FROM users WHERE id = ? INCLUDE role
+   |
+   v
+10. RESPONSE (lib/response/index.ts)
+    {
+      status: true,
+      data: {
+        id: "123",
+        email: "user@example.com",
+        role: { id: "1", name: "viewer" },
+        ...
+      }
+    }
+    |
+    v
+11. HTTP Response (200 OK)
+
+
+LAYER RESPONSIBILITIES
+======================
+
+ROUTES /routes
+  - Define URL paths (/api/users/:id)
+  - Define HTTP methods (GET, POST, PUT, DELETE)
+  - Assign middleware
+  - Connect to handlers
+  - Aggregate routes in index.ts
+
+HANDLERS /handlers
+  - Parse request body (req.json())
+  - Extract URL parameters (params.id)
+  - Extract query parameters (URL search params)
+  - Call service methods
+  - Transform response (toUserResponse)
+  - Return formatted Response
+  - Wrap in errorHandler for error handling
+
+SERVICES /services
+  - Business logic implementation
+  - Input validation
+  - Business rule enforcement
+  - Cross-repository orchestration
+  - Error handling (throw with .cause = HTTP status)
+  - Service-to-service calls
+  - Caching awareness
+
+REPOSITORIES /repositories
+  - CRUD operations (findById, create, update, delete)
+  - Query building (filters, sorting, pagination)
+  - Relation loading (include)
+  - Complex queries (search, custom filters)
+  - Raw SQL for performance
+  - Cache invalidation on mutations
+  - Counting/aggregation operations
+
+TYPES /types
+  - Input interfaces (UserCreateInput)
+  - Output interfaces (UserResponse)
+  - Database type extensions (UserWithRole)
+  - Response mappers (toUserResponse)
+  - Domain types (TokenPayload)
+
+TESTS /tests/integration
+  - Full request/response flow testing
+  - Authorization testing
+  - Data validation testing
+  - Database state verification
+  - Error handling testing
+  - Edge case testing
+
+
+ERROR HANDLING FLOW
+===================
+
+1. Service throws error:
+   throw new Error('Email taken', { cause: 400 })
+
+2. Handler wraps in errorHandler:
+   handler: async (req, params) =>
+     errorHandler(async () => {
+       // ... code that might throw
+     })
+
+3. errorHandler catches and converts:
+   catch (error) {
+     const status = error.cause || 500;
+     return fail(error.message, status);
+   }
+
+4. Response is sent:
+   {
+     status: false,
+     message: "Email taken"
+   }
+   HTTP Status: 400
+
+
+MIDDLEWARE PATTERN
+==================
+
+Routes can have multiple middleware:
+  middleware: [authenticate, requireAdmin, requireSelfOrAdmin('id')]
+
+Each middleware:
+  - Takes (req: AuthenticatedRequest, params: RouteParams)
+  - Returns Response | null
+  - Response = Stop and return error
+  - null = Continue to next middleware/handler
+
+Example:
+  async authenticate(req, params): Promise<Response | null> {
+    try {
+      req.user = await getUserFromToken(req.headers);
+      return null; // Continue
+    } catch {
+      return fail401('Invalid token'); // Stop
+    }
+  }
+
+
+CACHING PATTERN
+===============
+
+Repository-level caching:
+
+1. Read: Check cache first
+   async findById(id) {
+     const cached = await userCache.get(id);
+     if (cached) return cached;
+     
+     const user = await db.user.findUnique(...);
+     await userCache.set(id, user);
+     return user;
+   }
+
+2. Write: Invalidate cache
+   async update(id, data) {
+     const user = await db.user.update(...);
+     await userCache.clear(user.id, user.email);
+     return user;
+   }
+
+
+RESPONSE FORMAT
+===============
+
+Success (HTTP 200):
+{
+  "status": true,
+  "data": { /* actual data */ }
+}
+
+Error (HTTP 400, 401, 403, 500):
+{
+  "status": false,
+  "message": "Error description"
+}
+
+
+FILE ORGANIZATION
+=================
+
+daiPhatXanh-bunapi/
+├── routes/                 # Endpoint definitions
+├── handlers/              # HTTP request handling
+├── services/              # Business logic
+├── repositories/          # Data access
+├── types/                 # Type definitions
+├── tests/                 # Integration tests
+├── middleware/            # Auth, error, logging
+├── lib/                   # Utilities
+│   ├── auth/             # JWT, password, social
+│   ├── response/         # Response helpers
+│   ├── server/           # DB connection
+│   └── utils/            # Router, UUID, etc.
+├── caching/              # Cache management
+├── config/               # Configuration
+├── prisma/               # Database schema
+└── index.ts              # Server entry point
+
+
+IMPORT STRUCTURE
+================
+
+Imports use @/ alias (root):
+  import { userService } from '@/services/userService';
+  import { userRepo } from '@/repositories/userRepo';
+  import { authenticate } from '@/middleware/auth';
+  import { success } from '@/lib/response';
+  import { db } from '@/lib/server/db';
+  import type { UserResponse } from '@/types/user';
+
+
+CREATING NEW ENTITY
+===================
+
+When adding new entity (e.g., Song):
+
+1. types/song.ts
+   - SongCreateInput interface
+   - SongUpdateInput interface
+   - SongResponse interface
+   - toSongResponse() mapper
+
+2. repositories/songRepo.ts
+   - findById, findAll
+   - create, update, delete
+   - search, custom queries
+   - cache invalidation
+
+3. services/songService.ts
+   - Business logic methods
+   - Validation
+   - Cross-repo calls
+   - Error handling
+
+4. handlers/songHandler.ts
+   - Request handling methods
+   - Parse request data
+   - Call services
+   - Transform responses
+
+5. routes/songRoutes.ts
+   - Route definitions
+   - Middleware assignment
+   - Add to routes/index.ts
+
+6. tests/integration/song.test.ts
+   - API integration tests
+   - Authorization tests
+   - Data validation tests
+

@@ -79,6 +79,45 @@ export async function authenticate(req: AuthenticatedRequest, params: RouteParam
 }
 
 /**
+ * Optional authentication - populates user if token is present, but doesn't fail if not
+ * Used for endpoints that work for both authenticated and anonymous users
+ */
+export async function optionalAuthenticate(req: AuthenticatedRequest, params: RouteParams): Promise<Response | null> {
+	try {
+		const authHeader = req.headers.get('authorization');
+		if (!authHeader) {
+			// No token provided, continue without user
+			return null;
+		}
+
+		const token = authHeader.split(' ')[1];
+		if (!token) {
+			// No valid token, continue without user
+			return null;
+		}
+
+		// Verify token
+		const payload = await verifyAccessToken(token);
+
+		// Get user from database (cached via userRepo -> userCache)
+		const user = await userRepo.findById(payload.userId);
+
+		if (user) {
+			// Attach user to request
+			req.user = {
+				...user,
+				isAdmin: user?.role.name == AppRoleDefault.ADMIN,
+			};
+		}
+
+		return null; // Continue to next middleware/handler
+	} catch (error) {
+		// If authentication fails, continue without user (optional auth)
+		return null;
+	}
+}
+
+/**
  * Check if user has admin role
  */
 export async function requireAdmin(req: AuthenticatedRequest, params: RouteParams): Promise<Response | null> {

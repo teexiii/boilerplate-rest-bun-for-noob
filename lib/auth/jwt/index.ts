@@ -7,7 +7,7 @@ import appConfig from '@/config/appConfig';
 const accessTokenSecret = new TextEncoder().encode(appConfig.jwt.accessTokenSecret);
 const refreshTokenSecret = new TextEncoder().encode(appConfig.jwt.refreshTokenSecret);
 
-export async function generateAccessToken(user: UserWithRole): Promise<string> {
+export async function generateAccessToken(user: Omit<UserWithRole, 'password'>): Promise<string> {
 	const payload: TokenPayload = {
 		userId: user.id,
 		roleId: user.roleId,
@@ -20,7 +20,7 @@ export async function generateAccessToken(user: UserWithRole): Promise<string> {
 		.sign(accessTokenSecret);
 }
 
-export async function generateRefreshToken(user: UserWithRole, tokenId: string): Promise<string> {
+export async function generateRefreshToken(user: Omit<UserWithRole, 'password'>, tokenId: string): Promise<string> {
 	const payload: RefreshTokenPayload = {
 		tokenId,
 		userId: user.id,
