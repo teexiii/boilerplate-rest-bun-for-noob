@@ -122,7 +122,6 @@ export const verificationTokenRepo = {
 				u.id as "user.id",
 				u.email as "user.email",
 				u.phone as "user.phone",
-				u.password as "user.password",
 				u.name as "user.name",
 				u.image as "user.image",
 				u.email_verified as "user.emailVerified",

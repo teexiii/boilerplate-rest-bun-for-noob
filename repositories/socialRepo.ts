@@ -1,26 +1,29 @@
 import { db } from '@/lib/server/db';
-import type { Social, User } from '@prisma/client';
-
-type UserWithSocials = User & { socials: Social[] };
+import type { UserSocials } from '@/types';
+import type { Social } from '@prisma/client';
 
 export const socialRepo = {
 	/**
 	 * Find user by social provider and providerId (with raw SQL)
 	 */
-	async findUserByProviderAndId(provider: string, providerId: string): Promise<UserWithSocials | null> {
+	async findUserByProviderAndId(provider: string, providerId: string) {
 		const result = await db.$queryRaw<any[]>`
 			SELECT
 				u.id,
 				u.email,
 				u.phone,
 				u.name,
-				u.password,
 				u.image,
 				u.email_verified as "emailVerified",
 				u.email_verified_at as "emailVerifiedAt",
 				u.role_id as "roleId",
 				u.created_at as "createdAt",
 				u.updated_at as "updatedAt",
+				r.id as "role.id",
+				r.name as "role.name",
+				r.description as "role.description",
+				r.created_at as "role.createdAt",
+				r.updated_at as "role.updatedAt",
 				COALESCE(
 					json_agg(
 						json_build_object(
@@ -37,6 +40,7 @@ export const socialRepo = {
 					'[]'::json
 				) as "socials"
 			FROM users u
+			LEFT JOIN roles r ON u.role_id = r.id
 			LEFT JOIN socials s ON u.id = s.user_id
 			WHERE u.id IN (
 				SELECT user_id
@@ -44,13 +48,33 @@ export const socialRepo = {
 				WHERE provider = ${provider}
 				AND provider_id = ${providerId}
 			)
-			GROUP BY u.id
+			GROUP BY u.id, r.id
 			LIMIT 1
 		`;
 
 		if (result.length === 0) return null;
 
-		return result[0] as UserWithSocials;
+		const row = result[0];
+		return {
+			id: row.id,
+			email: row.email,
+			phone: row.phone,
+			name: row.name,
+			image: row.image,
+			emailVerified: row.emailVerified,
+			emailVerifiedAt: row.emailVerifiedAt,
+			roleId: row.roleId,
+			createdAt: row.createdAt,
+			updatedAt: row.updatedAt,
+			role: {
+				id: row['role.id'],
+				name: row['role.name'],
+				description: row['role.description'],
+				createdAt: row['role.createdAt'],
+				updatedAt: row['role.updatedAt'],
+			},
+			socials: row.socials,
+		} as UserSocials;
 	},
 
 	/**

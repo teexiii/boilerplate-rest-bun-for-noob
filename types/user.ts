@@ -14,8 +14,9 @@ export type UserSocials = UserWithRole & {
 	socials?: Social[];
 };
 
-export type UserWithRole = User & {
+export type UserWithRole = Omit<User, 'password'> & {
 	role: Role;
+	password?: string | null;
 };
 
 export interface UserCreateInput {
@@ -47,7 +48,7 @@ export interface UserResponse {
 	createdAt: Date;
 }
 
-export const toUserReponse = (user: Omit<UserSocials, 'password'>): UserResponse => {
+export const toUserReponse = (user: UserSocials): UserResponse => {
 	try {
 		return {
 			id: user.id,
@@ -68,8 +69,3 @@ export const toUserReponse = (user: Omit<UserSocials, 'password'>): UserResponse
 		throw new Error(`UserReponse failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
 	}
 };
-
-export interface ChangePasswordInput {
-	currentPassword: string;
-	newPassword: string;
-}

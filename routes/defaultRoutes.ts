@@ -26,7 +26,7 @@ export const defaultRoutes: Route[] = [
 			}),
 	},
 	{
-		path: '/api/hz',
+		path: '/hz',
 		method: 'GET',
 		handler: async (req: AuthenticatedRequest, params: RouteParams) =>
 			errorHandler(async () => {

@@ -23,6 +23,17 @@ export default [
 		},
 	},
 	{
-		ignores: ['node_modules', 'out', 'public', '.next', 'build', 'dist', 'cypress', '__test__', 'eslint.config.js'],
+		ignores: [
+			'node_modules',
+			'out',
+			'public',
+			'.next',
+			'build',
+			'dist',
+			'cypress',
+			'__test__',
+			'eslint.config.js',
+			'.husky',
+		],
 	},
 ];

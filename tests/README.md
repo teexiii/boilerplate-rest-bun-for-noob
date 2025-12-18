@@ -6,8 +6,8 @@ This project uses a separate test database to avoid polluting the development da
 
 ### Configuration
 
-- **Development DB**: `local-daiphatxanh-api`
-- **Test DB**: `local-daiphatxanh-api-test`
+- **Development DB**: `local-boilerplate-bun-for-noob`
+- **Test DB**: `local-boilerplate-bun-for-noob-test`
 - **Test Redis DB**: Database 1 (vs Database 0 for dev)
 
 ### First Time Setup

@@ -34,7 +34,7 @@
   - genreRepo.ts
   - refreshTokenRepo.ts
   - roleRepo.ts
-  - songSessionRepo.ts
+  - appSessionRepo.ts
   - userRepo.ts
   - verificationTokenRepo.ts
   - vibeRepo.ts
@@ -74,7 +74,7 @@
   - auth/password/passwordAddPepper.ts
   - auth/social/socialFetch.ts
   - response/index.ts       (success, fail400, fail401, etc.)
-  - response/songSession.ts
+  - response/appSession.ts
   - server/db/index.ts      (Prisma client)
   - utils/mongo-id.ts
   - utils/port.ts

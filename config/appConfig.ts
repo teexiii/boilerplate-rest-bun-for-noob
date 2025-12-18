@@ -27,6 +27,11 @@ const appConfig = {
 		from: env('MAIL_FROM', true, 'noreply@ult.vn'),
 	},
 
+	sendgrid: {
+		apiKey: env('SENDGRID_API_KEY', false),
+		fromEmail: env('SENDGRID_FROM_EMAIL', true, 'noreply@ult.vn'),
+	},
+
 	auth: {
 		passwordPepperSecret: env('PASSWORD_PEPPER_SECRET', false),
 	},

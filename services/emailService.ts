@@ -1,6 +1,8 @@
 import { isLocal, isProd } from '@/config';
 import appConfig from '@/config/appConfig';
+import sgMail from '@sendgrid/mail';
 import { spawn } from 'bun';
+import { toBool } from 'diginext-utils/dist/object';
 
 interface SendEmailOptions {
 	to: string;
@@ -10,10 +12,15 @@ interface SendEmailOptions {
 	from?: string;
 }
 
+// Initialize SendGrid with API key
+if (appConfig.sendgrid.apiKey) {
+	sgMail.setApiKey(appConfig.sendgrid.apiKey);
+}
+
 /**
  * Send email using sendmail on Ubuntu
  */
-async function sendEmail(options: SendEmailOptions): Promise<void> {
+async function sendEmailNativeUbunntu(options: SendEmailOptions): Promise<void> {
 	// Skip sending emails in local or test environments
 	if (isLocal) return;
 
@@ -52,7 +59,55 @@ async function sendEmail(options: SendEmailOptions): Promise<void> {
 	}
 }
 
+/**
+ * Send email using SendGrid API
+ */
+async function sendEmail(options: SendEmailOptions): Promise<void> {
+	// Skip sending emails in local or test environments
+
+	if (toBool(process.env.USE_EMAIL_ULT)) return sendEmailNativeUbunntu(options);
+
+	if (isLocal) return;
+
+	console.log('SEND_EMAIL');
+
+	const from = options.from || appConfig.sendgrid.fromEmail;
+
+	try {
+		const msg = {
+			to: options.to,
+			from,
+			subject: options.subject,
+			text: options.text,
+			html: options.html || options.text,
+		};
+
+		const res = await sgMail.send(msg);
+	} catch (error) {
+		const err = error as any;
+		console.error('SendGrid error:', err?.response?.body || err?.message);
+		throw new Error(`Failed to send email: ${err?.response?.body?.errors?.[0]?.message || err?.message}`);
+	}
+}
+
 export const emailService = {
+	/**
+	 * Send a custom email using SendGrid
+	 * @param to - Recipient email address
+	 * @param subject - Email subject
+	 * @param text - Plain text content
+	 * @param html - HTML content (optional)
+	 * @param from - Sender email (optional, defaults to SENDGRID_FROM_EMAIL)
+	 */
+	async sendMail(to: string, subject: string, text: string, html?: string, from?: string): Promise<void> {
+		await sendEmail({
+			to,
+			subject,
+			text,
+			html,
+			from,
+		});
+	},
 	/**
 	 * Send email verification link to user
 	 */

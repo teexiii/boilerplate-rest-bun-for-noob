@@ -1,7 +1,7 @@
 import env from '@/config/env';
 import { AppPermissionDefault, AppRoleDefault } from '@/data';
 import { hashPassword } from '@/lib/auth/password';
-import { Prisma, PrismaClient, type Permission } from '@prisma/client';
+import { PrismaClient, type Permission } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -35,15 +35,14 @@ async function findOrCreateRole(name: string, permissions: Permission[]) {
 	return existingRole;
 }
 
-// Default users to create
-const defaultUsers = Array(10)
-	.fill(null)
-	.map((_, id) => ({
-		email: `user-${id}`,
-		password: 'User123#',
-		name: `User ${id}`,
-		role: AppRoleDefault.VIEWER,
-	}));
+// const defaultUsers = Array(1)
+// 	.fill(null)
+// 	.map((_, id) => ({
+// 		email: `user-${id + 1}`,
+// 		password: 'Top@123#',
+// 		name: `User ${id + 1}`,
+// 		role: AppRoleDefault.VIEWER,
+// 	}));
 
 /**
  * Find or create a user
@@ -61,6 +60,8 @@ const findOrCreateUser = async (data: any, roleId: string) => {
 				password: hashedUserPassword,
 				name: data.name,
 				roleId,
+				emailVerified: true,
+				emailVerifiedAt: new Date(),
 			},
 			include: { role: true },
 		});
@@ -77,7 +78,6 @@ async function main() {
 	const fullControlPermission = await findOrCreatePermission(AppPermissionDefault.FULL_CONTROL);
 	const writePermission = await findOrCreatePermission(AppPermissionDefault.WRITE);
 	const readPermission = await findOrCreatePermission(AppPermissionDefault.READ);
-
 	const adminRole = await findOrCreateRole(AppRoleDefault.ADMIN, [
 		writePermission,
 		readPermission,
@@ -85,10 +85,8 @@ async function main() {
 	]);
 	const viewerRole = await findOrCreateRole(AppRoleDefault.VIEWER, [readPermission]);
 	const proRole = await findOrCreateRole(AppRoleDefault.PRO, [readPermission]);
-
 	const findOrCreateAdmin = async (email: string) => {
 		let existingUser = await prisma.user.findFirst({ where: { email } });
-
 		if (!existingUser) {
 			const password = await hashPassword(env('ADMIN_PASSWORD_DEFAULT', false));
 			// Create default User_1 with Admin role
@@ -103,19 +101,10 @@ async function main() {
 				},
 			});
 		}
-
 		return existingUser;
 	};
 
 	const admin = await findOrCreateAdmin(env('ADMIN_EMAIL_DEFAULT', false));
-
-	// // Create users
-	// console.log('Creating users...');
-	// const users: Record<string, any> = {};
-	// for (const userData of defaultUsers) {
-	// 	const roleId = viewerRole.id!;
-	// 	users[userData.email] = await findOrCreateUser(userData, roleId);
-	// }
 
 	console.log('Seed done');
 }
@@ -128,4 +117,5 @@ main()
 	})
 	.finally(async () => {
 		await prisma.$disconnect();
+		process.exit(0);
 	});

@@ -2,6 +2,7 @@
 export * from './auth';
 export * from './role';
 export * from './socialAuth';
+export * from './user';
 
 /**
  * Generic validator class factory that creates runtime validators for TypeScript interfaces

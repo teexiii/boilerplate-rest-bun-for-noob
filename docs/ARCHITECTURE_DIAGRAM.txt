@@ -241,8 +241,7 @@ Error (HTTP 400, 401, 403, 500):
 
 FILE ORGANIZATION
 =================
-
-daiPhatXanh-bunapi/
+Project/
 ├── routes/                 # Endpoint definitions
 ├── handlers/              # HTTP request handling
 ├── services/              # Business logic
@@ -276,38 +275,38 @@ Imports use @/ alias (root):
 CREATING NEW ENTITY
 ===================
 
-When adding new entity (e.g., Song):
+When adding new entity (e.g., App):
 
-1. types/song.ts
-   - SongCreateInput interface
-   - SongUpdateInput interface
-   - SongResponse interface
-   - toSongResponse() mapper
+1. types/app.ts
+   - AppCreateInput interface
+   - AppUpdateInput interface
+   - AppResponse interface
+   - toAppResponse() mapper
 
-2. repositories/songRepo.ts
-   - findById, findAll
+2. repositories/appRepo.ts
+   - findById, findAll (raw sql)
    - create, update, delete
    - search, custom queries
    - cache invalidation
 
-3. services/songService.ts
+3. services/appService.ts
    - Business logic methods
    - Validation
    - Cross-repo calls
    - Error handling
 
-4. handlers/songHandler.ts
+4. handlers/appHandler.ts
    - Request handling methods
    - Parse request data
    - Call services
    - Transform responses
 
-5. routes/songRoutes.ts
+5. routes/appRoutes.ts
    - Route definitions
    - Middleware assignment
    - Add to routes/index.ts
 
-6. tests/integration/song.test.ts
+6. tests/integration/app.test.ts
    - API integration tests
    - Authorization tests
    - Data validation tests
