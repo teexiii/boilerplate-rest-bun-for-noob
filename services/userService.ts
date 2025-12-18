@@ -4,7 +4,8 @@ import { refreshTokenRepo } from '@/repositories/refreshTokenRepo';
 import { roleRepo } from '@/repositories/roleRepo';
 import { userRepo } from '@/repositories/userRepo';
 import { roleService } from '@/services/roleService';
-import type { UserUpdateInput, ChangePasswordInput, UserCreateInput } from '@/types/user';
+import type { UserUpdateInput, UserCreateInput } from '@/types/user';
+import type { ChangePasswordInput } from '@/types/auth';
 
 export const userService = {
 	/**

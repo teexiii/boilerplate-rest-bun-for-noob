@@ -7,11 +7,12 @@ import appConfig from '@/config/appConfig';
 const accessTokenSecret = new TextEncoder().encode(appConfig.jwt.accessTokenSecret);
 const refreshTokenSecret = new TextEncoder().encode(appConfig.jwt.refreshTokenSecret);
 
-export async function generateAccessToken(user: Omit<UserWithRole, 'password'>): Promise<string> {
+export async function generateAccessToken(user: Pick<UserWithRole, 'id' | 'roleId' | 'role'>): Promise<string> {
+	console.log(user?.role);
 	const payload: TokenPayload = {
 		userId: user.id,
 		roleId: user.roleId,
-		roleName: user.role.name,
+		roleName: user?.role?.name,
 	};
 
 	return await new SignJWT(payload as any)
@@ -20,7 +21,7 @@ export async function generateAccessToken(user: Omit<UserWithRole, 'password'>):
 		.sign(accessTokenSecret);
 }
 
-export async function generateRefreshToken(user: Omit<UserWithRole, 'password'>, tokenId: string): Promise<string> {
+export async function generateRefreshToken(user: Pick<UserWithRole, 'id'>, tokenId: string): Promise<string> {
 	const payload: RefreshTokenPayload = {
 		tokenId,
 		userId: user.id,
@@ -68,10 +69,6 @@ export async function verifyAccessToken(token: string): Promise<TokenPayload> {
 }
 
 export async function verifyRefreshToken(token: string): Promise<RefreshTokenPayload> {
-	try {
-		const { payload } = await jwtVerify(token, refreshTokenSecret);
-		return payload as unknown as RefreshTokenPayload;
-	} catch (err) {
-		throw err;
-	}
+	const { payload } = await jwtVerify(token, refreshTokenSecret);
+	return payload as unknown as RefreshTokenPayload;
 }

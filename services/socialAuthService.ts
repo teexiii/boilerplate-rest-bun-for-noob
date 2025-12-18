@@ -1,16 +1,14 @@
 // src/services/socialAuthService.ts
 
 import { AppRoleDefault } from '@/data';
-import { db } from '@/lib/server/db';
 import { fetchSocialProfile } from '@/lib/auth/social/socialFetch';
-import { generateAccessToken, generateRefreshToken } from '@/lib/auth/jwt';
-import { refreshTokenRepo } from '@/repositories/refreshTokenRepo';
+import { generateAccessToken } from '@/lib/auth/jwt';
 import { userRepo } from '@/repositories/userRepo';
+import { socialRepo } from '@/repositories/socialRepo';
 import { roleService } from '@/services/roleService';
 import type { AuthResponse } from '@/types/auth';
-import type { SocialAuthInput, SocialProfile } from '@/types/socialAuth';
-import { toUserReponse, type UserSocials } from '@/types/user';
-import { randomUUIDv7 } from 'bun';
+import type { SocialAuthInput, SocialProvider } from '@/types/socialAuth';
+import { toUserReponse } from '@/types/user';
 import { refreshTokenService } from '@/services/refreshTokenService';
 
 export const socialAuthService = {
@@ -23,24 +21,11 @@ export const socialAuthService = {
 		if (!socialProfile?.providerId) throw new Error('Unsupported social provider', { cause: 401 });
 
 		// Find existing user by provider and providerId
-		let user = await db.user.findFirst({
-			where: {
-				socials: {
-					some: {
-						provider: input.provider,
-						providerId: socialProfile?.providerId,
-					},
-				},
-			},
-			include: {
-				role: true,
-				socials: true,
-			},
-		});
+		let user = await socialRepo.findUserByProviderAndId(input.provider, socialProfile.providerId);
 
 		// If user doesn't exist but we have an email, check if email is already registered
 		if (!user && socialProfile.email) {
-			user = (await userRepo.findByEmail(socialProfile.email)) as any;
+			user = await userRepo.findByEmail(socialProfile.email);
 		}
 
 		// If user doesn't exist, create a new one
@@ -57,52 +42,38 @@ export const socialAuthService = {
 			// Make sure the email is unique
 			const email = socialProfile.email;
 
-			// Create the user
-			user = await db.user.create({
-				data: {
-					email,
-					password: '', // No password for social login users
-					name: socialProfile.name || baseUsername,
-					roleId: defaultRole.id,
-					emailVerified: true,
-					emailVerifiedAt: new Date(),
-					socials: {
-						create: {
-							provider: input.provider,
-							providerId: socialProfile.providerId,
-							email: socialProfile.email,
-							profileData: socialProfile.providerData || {},
-						},
-					},
-				},
-				include: {
-					role: true,
-					socials: true,
-				},
-			});
-		} else if (
-			!user.socials?.some((sl) => sl.provider === input.provider && sl.providerId === socialProfile.providerId)
-		) {
-			// User exists but doesn't have this social login connected - connect it
-			await db.social.create({
-				data: {
-					userId: user.id,
+			// Create the user with social login
+			user = await userRepo.createWithSocial({
+				email,
+				name: socialProfile.name || baseUsername,
+				roleId: defaultRole.id,
+				emailVerified: true,
+				emailVerifiedAt: new Date(),
+				social: {
 					provider: input.provider,
 					providerId: socialProfile.providerId,
 					email: socialProfile.email,
 					profileData: socialProfile.providerData || {},
 				},
 			});
+		} else if (
+			!user.socials?.some((sl) => sl.provider === input.provider && sl.providerId === socialProfile.providerId)
+		) {
+			// User exists but doesn't have this social login connected - connect it
+			await socialRepo.create({
+				userId: user.id,
+				provider: input.provider,
+				providerId: socialProfile.providerId,
+				email: socialProfile.email,
+				profileData: socialProfile.providerData || {},
+			});
 		}
 
-		if (!user?.emailVerified)
-			await db.user.update({
-				where: { id: user.id },
-				data: {
-					emailVerified: true,
-					emailVerifiedAt: new Date(),
-				},
-			});
+		if (!user?.emailVerified) {
+			await userRepo.markEmailAsVerified(user!.id);
+			user = await userRepo.findById(user!.id);
+			if (!user) throw new Error('User not found', { cause: 404 });
+		}
 
 		// Generate tokens
 		const accessToken = await generateAccessToken(user);
@@ -123,12 +94,7 @@ export const socialAuthService = {
 		const socialProfile = await fetchSocialProfile(input.provider, input.accessToken, input.redirectUri);
 
 		// Check if this social social is already linked to another user
-		const existingLink = await db.social.findFirst({
-			where: {
-				provider: input.provider,
-				providerId: socialProfile.providerId,
-			},
-		});
+		const existingLink = await socialRepo.findByProviderAndId(input.provider, socialProfile.providerId);
 
 		if (existingLink && existingLink.userId !== userId) {
 			throw new Error('This social social is already linked to another user', { cause: 400 });
@@ -136,14 +102,12 @@ export const socialAuthService = {
 
 		// If this social isn't linked to this user yet, create the link
 		if (!existingLink) {
-			await db.social.create({
-				data: {
-					userId,
-					provider: input.provider,
-					providerId: socialProfile.providerId,
-					email: socialProfile.email,
-					profileData: socialProfile.providerData || {},
-				},
+			await socialRepo.create({
+				userId,
+				provider: input.provider,
+				providerId: socialProfile.providerId,
+				email: socialProfile.email,
+				profileData: socialProfile.providerData || {},
 			});
 		}
 	},
@@ -153,15 +117,13 @@ export const socialAuthService = {
 	 */
 	async unlinkSocialAccount(userId: string, provider: string): Promise<void> {
 		// Count user's social logins
-		const socialLoginCount = await db.social.count({
-			where: { userId },
-		});
+		const socialLoginCount = await socialRepo.countByUserId(userId);
 
 		// Check if user has a password
-		const user = await db.user.findUnique({
-			where: { id: userId },
-			select: { password: true },
-		});
+		const user = await userRepo.findById(userId);
+		if (!user) {
+			throw new Error('User not found', { cause: 404 });
+		}
 
 		// If user has no password and this is their only social login, prevent unlinking
 		if (socialLoginCount <= 1 && (!user?.password || user.password === '')) {
@@ -169,26 +131,13 @@ export const socialAuthService = {
 		}
 
 		// Delete the social login
-		await db.social.deleteMany({
-			where: {
-				userId,
-				provider,
-			},
-		});
+		await socialRepo.deleteByUserIdAndProvider(userId, provider);
 	},
 
 	/**
 	 * Get all social logins for a user
 	 */
 	async getUserSocials(userId: string): Promise<{ provider: string; email?: string | null }[]> {
-		const socials = await db.social.findMany({
-			where: { userId },
-			select: {
-				provider: true,
-				email: true,
-			},
-		});
-
-		return socials;
+		return socialRepo.findByUserId(userId);
 	},
 };

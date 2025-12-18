@@ -98,7 +98,7 @@ const mapRowToUser = (row: any, socials: any[]): IUser => {
 		email: row.email,
 		phone: row.phone,
 		name: row.name,
-		password: row.password,
+		...(row.password ? { password: row.password } : {}),
 		image: row.image,
 		emailVerified: row.emailVerified,
 		emailVerifiedAt: row.emailVerifiedAt,
@@ -245,7 +245,6 @@ export const userRepo = {
 					u.email,
 					u.phone,
 					u.name,
-					u.password,
 					u.image,
 					u.email_verified as "emailVerified",
 					u.email_verified_at as "emailVerifiedAt",
@@ -261,7 +260,7 @@ export const userRepo = {
 				INNER JOIN roles r ON u.role_id = r.id
 				WHERE u.id = ${query}::uuid
 				ORDER BY u.email ASC
-				LIMIT ${options?.limit || 999999}
+				LIMIT ${options?.limit || 50}
 				OFFSET ${options?.offset || 0}
 			`
 			: await db.$queryRaw<any[]>`
@@ -270,7 +269,6 @@ export const userRepo = {
 					u.email,
 					u.phone,
 					u.name,
-					u.password,
 					u.image,
 					u.email_verified as "emailVerified",
 					u.email_verified_at as "emailVerifiedAt",
@@ -290,7 +288,7 @@ export const userRepo = {
 					OR u.phone LIKE ${likeQuery}
 				)
 				ORDER BY u.email ASC
-				LIMIT ${options?.limit || 999999}
+				LIMIT ${options?.limit || 50}
 				OFFSET ${options?.offset || 0}
 			`;
 
@@ -351,7 +349,7 @@ export const userRepo = {
 			FROM users u
 			INNER JOIN roles r ON u.role_id = r.id
 			ORDER BY u.email ASC
-			LIMIT ${options?.limit || 999999}
+			LIMIT ${options?.limit || 50}
 			OFFSET ${options?.offset || 0}
 		`;
 
@@ -380,7 +378,7 @@ export const userRepo = {
 	/**
 	 * Create a new user
 	 */
-	async create(data: UserCreateInput) {
+	async create(data: UserCreateInput): Promise<IUser> {
 		const user = await db.user.create({
 			data,
 			include,
@@ -395,7 +393,7 @@ export const userRepo = {
 	/**
 	 * Update a user
 	 */
-	async update(id: string, data: UserUpdateInput) {
+	async update(id: string, data: UserUpdateInput): Promise<IUser> {
 		const user = await db.user.update({
 			where: { id },
 			data,
@@ -411,7 +409,7 @@ export const userRepo = {
 	/**
 	 * Update user password
 	 */
-	async updatePassword(id: string, password: string) {
+	async updatePassword(id: string, password: string): Promise<IUser> {
 		const user = await db.user.update({
 			where: { id },
 			data: { password },
@@ -465,7 +463,6 @@ export const userRepo = {
 				u.email,
 				u.phone,
 				u.name,
-				u.password,
 				u.image,
 				u.email_verified as "emailVerified",
 				u.email_verified_at as "emailVerifiedAt",
@@ -481,7 +478,7 @@ export const userRepo = {
 			INNER JOIN roles r ON u.role_id = r.id
 			WHERE u.role_id = ${roleId}::uuid
 			ORDER BY u.email ASC
-			LIMIT ${options?.limit || 999999}
+			LIMIT ${options?.limit || 50}
 			OFFSET ${options?.offset || 0}
 		`;
 
@@ -503,7 +500,7 @@ export const userRepo = {
 	/**
 	 * Mark user email as verified
 	 */
-	async markEmailAsVerified(id: string) {
+	async markEmailAsVerified(id: string): Promise<IUser> {
 		const user = await db.user.update({
 			where: { id },
 			data: {
@@ -522,7 +519,7 @@ export const userRepo = {
 	/**
 	 * Update user email
 	 */
-	async updateEmail(id: string, email: string) {
+	async updateEmail(id: string, email: string): Promise<IUser> {
 		// Get old email first to clear cache
 		const oldUser = await db.user.findUnique({ where: { id }, select: { email: true } });
 
@@ -544,6 +541,47 @@ export const userRepo = {
 				userCache.clearLists(), // Email change might affect search results
 			]);
 		}
+
+		return user;
+	},
+
+	/**
+	 * Create a new user with social login
+	 */
+	async createWithSocial(data: {
+		email: string;
+		name?: string | null;
+		roleId: string;
+		emailVerified: boolean;
+		emailVerifiedAt: Date;
+		social: {
+			provider: string;
+			providerId: string;
+			email?: string | null;
+			profileData?: any;
+		};
+	}): Promise<IUser> {
+		const user = await db.user.create({
+			data: {
+				email: data.email,
+				name: data.name,
+				roleId: data.roleId,
+				emailVerified: data.emailVerified,
+				emailVerifiedAt: data.emailVerifiedAt,
+				socials: {
+					create: {
+						provider: data.social.provider,
+						providerId: data.social.providerId,
+						email: data.social.email,
+						profileData: data.social.profileData,
+					},
+				},
+			},
+			include,
+		});
+
+		// Invalidate list caches since a new user was added
+		await userCache.clearLists();
 
 		return user;
 	},

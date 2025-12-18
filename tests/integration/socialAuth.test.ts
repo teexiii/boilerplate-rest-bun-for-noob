@@ -97,7 +97,7 @@ describe('Social Auth API Integration Tests', () => {
 		try {
 			await db.role.createMany({
 				data: [{ name: AppRoleDefault.VIEWER }, { name: AppRoleDefault.ADMIN }],
-				// skipDuplicates: true,
+				skipDuplicates: true,
 			});
 		} catch (error) {
 			console.log('Roles already exist:', error);

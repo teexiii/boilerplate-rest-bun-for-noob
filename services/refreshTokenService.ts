@@ -6,7 +6,7 @@ import type { UserWithRole } from '@/types/user';
 import { v7 } from 'uuid';
 
 export const refreshTokenService = {
-	async generateRefreshTokenByUser(user: Omit<UserWithRole, 'password'>) {
+	async generateRefreshTokenByUser(user: Pick<UserWithRole, 'id'>) {
 		try {
 			const id = v7();
 			const expiration = timeToMs(appConfig.jwt.refreshTokenExpiresIn);

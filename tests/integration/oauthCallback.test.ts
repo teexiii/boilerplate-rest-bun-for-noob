@@ -131,7 +131,6 @@
 // 			method: 'POST',
 // 			headers: { 'Content-Type': 'application/json' },
 // 			body: JSON.stringify({
-// 				code: testAuthCode,
 // 				provider: SocialProvider.GOOGLE,
 // 				state: btoa(JSON.stringify({ nonce: 'test-nonce' })),
 // 			}),
@@ -157,7 +156,6 @@
 // 			method: 'POST',
 // 			headers: { 'Content-Type': 'application/json' },
 // 			body: JSON.stringify({
-// 				code: testAuthCode,
 // 				provider: SocialProvider.FACEBOOK,
 // 				state: btoa(JSON.stringify({ nonce: 'test-nonce' })),
 // 			}),
@@ -182,7 +180,6 @@
 // 			method: 'POST',
 // 			headers: { 'Content-Type': 'application/json' },
 // 			body: JSON.stringify({
-// 				code: testAuthCode,
 // 				provider: SocialProvider.DISCORD,
 // 				state: btoa(JSON.stringify({ nonce: 'test-nonce' })),
 // 			}),
@@ -201,7 +198,6 @@
 // 			method: 'POST',
 // 			headers: { 'Content-Type': 'application/json' },
 // 			body: JSON.stringify({
-// 				code: testAuthCode,
 // 				provider: SocialProvider.GITHUB,
 // 				state: btoa(JSON.stringify({ nonce: 'test-nonce' })),
 // 			}),
@@ -239,7 +235,6 @@
 // 			method: 'POST',
 // 			headers: { 'Content-Type': 'application/json' },
 // 			body: JSON.stringify({
-// 				code: testAuthCode,
 // 				provider: 'unsupported-provider',
 // 				state: btoa(JSON.stringify({ nonce: 'test-nonce' })),
 // 			}),
@@ -275,7 +270,6 @@
 // 			method: 'POST',
 // 			headers: { 'Content-Type': 'application/json' },
 // 			body: JSON.stringify({
-// 				code: testAuthCode,
 // 				provider: SocialProvider.GOOGLE,
 // 				state: btoa(JSON.stringify({ nonce: 'test-nonce' })),
 // 			}),

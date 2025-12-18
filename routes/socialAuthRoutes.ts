@@ -2,12 +2,14 @@
 
 import { socialAuthHandler } from '@/handlers/socialAuthHandler';
 import { authenticate, requireSelfOrAdmin } from '@/middleware/auth';
+import { requireHash } from '@/middleware/security';
 import type { Route } from '@/types/auth';
 
 export const socialAuthRoutes: Route[] = [
 	{
 		path: '/api/auth/social/login',
 		method: 'POST',
+		middleware: [requireHash],
 		handler: socialAuthHandler.social,
 	},
 	{
