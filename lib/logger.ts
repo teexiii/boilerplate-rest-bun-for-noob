@@ -16,38 +16,46 @@ export const logger = pino({
 	transport: isProd ? undefined : transport,
 });
 
-// Override console methods
+// Override console methods - use Pino for structured logging
 const originalConsole = { ...console };
 
 console.log = (...args) => {
-	logger.info(...args);
 	if (!isProd) {
 		originalConsole.log(...args);
+	} else {
+		logger.info(...args);
 	}
 };
 
 console.error = (...args) => {
-	logger.error(...args);
-	originalConsole.error(...args);
+	// Fixed: Apply same guard as other methods to prevent double logging in production
+	if (!isProd) {
+		originalConsole.error(...args);
+	} else {
+		logger.error(...args);
+	}
 };
 
 console.warn = (...args) => {
-	logger.warn(...args);
 	if (!isProd) {
 		originalConsole.warn(...args);
+	} else {
+		logger.warn(...args);
 	}
 };
 
 console.info = (...args) => {
-	logger.info(...args);
 	if (!isProd) {
 		originalConsole.info(...args);
+	} else {
+		logger.info(...args);
 	}
 };
 
 console.debug = (...args) => {
-	logger.debug(...args);
 	if (!isProd) {
 		originalConsole.debug(...args);
+	} else {
+		logger.debug(...args);
 	}
 };

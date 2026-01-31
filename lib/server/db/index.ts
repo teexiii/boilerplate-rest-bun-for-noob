@@ -15,6 +15,16 @@ const prismaClientOptions: Prisma.PrismaClientOptions = {
 					{ level: 'warn', emit: 'stdout' },
 				] as Prisma.LogDefinition[])
 			: (['error'] as Prisma.LogLevel[]),
+	// Connection pool configuration for better concurrency
+	datasources: {
+		db: {
+			url: process.env.DATABASE_URL
+				? process.env.DATABASE_URL.includes('?')
+					? `${process.env.DATABASE_URL}&connection_limit=50&pool_timeout=10`
+					: `${process.env.DATABASE_URL}?connection_limit=50&pool_timeout=10`
+				: undefined,
+		},
+	},
 };
 
 export function createPrismaClient() {

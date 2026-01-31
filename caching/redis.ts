@@ -8,6 +8,14 @@ const redisClient = new Redis({
 	...(appConfig.redis.username ? { username: appConfig.redis.username } : {}),
 	...(appConfig.redis.password ? { password: appConfig.redis.password } : {}),
 	...(appConfig.redis.db ? { db: appConfig.redis.db } : {}),
+	// Connection pool configuration for better concurrency
+	maxRetriesPerRequest: 3,
+	enableOfflineQueue: false, // Fail fast instead of queuing when disconnected
+	lazyConnect: false,
+	retryStrategy: (times: number) => {
+		if (times > 10) return null; // Max 10 retry attempts
+		return Math.min(times * 100, 3000); // Exponential backoff, max 3s
+	},
 });
 
 redisClient.on('error', (err) => {
@@ -54,12 +62,33 @@ export const redis = {
 		}
 	},
 
-	// Delete multiple keys by pattern
+	// Delete multiple keys by pattern using SCAN (non-blocking)
 	async delByPattern(pattern: string): Promise<void> {
 		try {
-			const keys = await redisClient.keys(pattern);
-			if (keys.length > 0) {
-				await redisClient.del(keys);
+			const keysToDelete: string[] = [];
+			let cursor = '0';
+
+			// Use SCAN instead of KEYS (non-blocking, cursor-based iteration)
+			do {
+				const result = await redisClient.scan(
+					cursor,
+					'MATCH',
+					pattern,
+					'COUNT',
+					100 // Scan 100 keys per iteration
+				);
+				cursor = result[0]; // Next cursor position
+				const keys = result[1]; // Keys found in this iteration
+				keysToDelete.push(...keys);
+			} while (cursor !== '0'); // cursor === '0' means scan complete
+
+			// Delete keys in batches to avoid blocking on large deletes
+			if (keysToDelete.length > 0) {
+				const BATCH_SIZE = 100;
+				for (let i = 0; i < keysToDelete.length; i += BATCH_SIZE) {
+					const batch = keysToDelete.slice(i, i + BATCH_SIZE);
+					await redisClient.del(...batch);
+				}
 			}
 		} catch (error) {
 			throw new Error(`REDIS_DEL_BY_PATTERN_FAILED: ${error instanceof Error ? error.message : 'Unknown error'}`);

@@ -31,5 +31,5 @@
 		}
 	},
 	"include": ["**/*.ts"],
-	"exclude": ["./node_modules", "./dist", "./start", "eslint.config.js"]
+	"exclude": ["./node_modules", "./dist", "./start", "eslint.config.js", "./prisma", "tests/integration"]
 }

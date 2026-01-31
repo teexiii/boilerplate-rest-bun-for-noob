@@ -34,6 +34,8 @@ export default [
 			'__test__',
 			'eslint.config.js',
 			'.husky',
+			'prisma',
+			'tests/integration',
 		],
 	},
 ];

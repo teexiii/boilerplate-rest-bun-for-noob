@@ -3,19 +3,25 @@ import { makeHash } from '@/lib/security/hash';
 import { redis } from '@/caching/redis';
 import crypto from 'crypto';
 import type { AuthenticatedRequest, RouteParams } from '@/types/auth';
-import { toInt } from 'diginext-utils/dist/object';
+import { toInt } from 'diginext-utils/object';
+import { isLocal } from '@/config';
 
 const SECURITY_CACHE_PREFIX = 'security:nonce';
-const DURATION_CACHE = toInt(process.env.DURATION_CACHE_HASH_SECOND) || 10800;
+const DURATION_CACHE = toInt(process.env.DURATION_CACHE_HASH_SECOND) || 1800;
 
 export async function requireHash(req: AuthenticatedRequest, params: RouteParams): Promise<Response | null> {
 	if (process.env.NODE_ENV == 'test') return null;
+	if (isLocal) return null;
 
 	const hih = req.headers.get('hash');
-	if (!hih) return fail('Missing Signature', 406);
+	if (!hih) {
+		return fail('Missing Signature', 406);
+	}
 
 	const [uuid, providedHash] = hih.split('.');
-	if (!uuid || !providedHash) return fail('Invalid Format', 406);
+	if (!uuid || !providedHash) {
+		return fail('Invalid Format', 406);
+	}
 
 	const expectedHash = makeHash(uuid);
 

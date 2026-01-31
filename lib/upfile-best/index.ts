@@ -2,9 +2,8 @@ import appConfig from '@/config/appConfig';
 import justFetch from '@/lib/fetch/justFetch';
 import type { FetchResponse } from '@/lib/fetch/type';
 import { isValidUUID } from '@/lib/utils/uuid';
-import { makeSlug } from 'diginext-utils/dist/Slug';
-import { randomFileName } from 'diginext-utils/dist/string/random';
-import { getExtensionFromMimeType, getFileNameWithoutExtension } from 'diginext-utils/dist/string/url';
+import { makeSlug } from 'diginext-utils/makeSlug';
+import { randomFileName, getExtensionFromMimeType, getFileNameWithoutExtension } from 'diginext-utils/string';
 
 /**
  * Response structure from Upfile Best API
@@ -108,7 +107,7 @@ const base64ToBuffer = (base64: string): Buffer => {
  * @param request - Upload request with buffer and metadata
  * @returns Upload response from API
  */
-const uploadToServer = async ({
+export const uploadToServer = async ({
 	buffer,
 	fileName,
 	mimeType,
@@ -127,7 +126,7 @@ const uploadToServer = async ({
 			'Content-Disposition': `attachment; filename="${fileName}"`,
 			'Content-Length': `${actualSize}`,
 			'Content-Type': mimeType,
-			'upf-base-dir': appConfig.upfileBest.getUploadDir(dir),
+			'upf-base-dir': dir || appConfig.upfileBest.getUploadDir(),
 			'token-api': process.env.UPFILE_BEST_TOKEN_API!,
 		},
 	});

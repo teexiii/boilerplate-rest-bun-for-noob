@@ -1,5 +1,5 @@
 import type { User, Role, Social } from '@prisma/client';
-import { toBool } from 'diginext-utils/dist/object';
+import { toBool } from 'diginext-utils/object';
 
 // Add this interface to represent user social logins
 export interface SocialInfo {
@@ -14,9 +14,10 @@ export type UserSocials = UserWithRole & {
 	socials?: Social[];
 };
 
-export type UserWithRole = Omit<User, 'password'> & {
+export type UserWithRole = Omit<User, 'password' | 'blockTurn'> & {
 	role: Role;
 	password?: string | null;
+	blockTurn?: boolean;
 };
 
 export interface UserCreateInput {
@@ -30,13 +31,16 @@ export interface UserUpdateInput {
 	email?: string;
 	name?: string;
 	roleId?: string;
+	blockTurn?: boolean;
 }
 
 export interface UserResponse {
 	id: string;
 	email: string;
 	name: string | null;
+	image: string | null;
 	emailVerified: boolean;
+	blockTurn: boolean;
 	role: {
 		id: string;
 		name: string;
@@ -45,16 +49,31 @@ export interface UserResponse {
 		provider: string;
 		email: string | null;
 	}[];
+	remainingTurns?: number;
+	totalBonusToday?: number;
+	sessionCount?: number;
+	totalShares?: number;
+	totalDownloads?: number;
 	createdAt: Date;
 }
 
-export const toUserReponse = (user: UserSocials): UserResponse => {
+export const toUserReponse = (
+	user: UserSocials & {
+		remainingTurns?: number;
+		totalBonusToday?: number;
+		sessionCount?: number;
+		totalShares?: number;
+		totalDownloads?: number;
+	}
+): UserResponse => {
 	try {
 		return {
 			id: user.id,
 			email: user.email,
 			name: user.name || user.email,
+			image: user.image || user.image,
 			emailVerified: toBool(user.emailVerified),
+			blockTurn: toBool(user.blockTurn),
 			role: {
 				name: user.role.name,
 				id: user.role.id,
@@ -63,6 +82,11 @@ export const toUserReponse = (user: UserSocials): UserResponse => {
 				provider: sl.provider,
 				email: sl.email!,
 			})),
+			remainingTurns: user.remainingTurns,
+			totalBonusToday: user.totalBonusToday,
+			sessionCount: user.sessionCount,
+			totalShares: user.totalShares,
+			totalDownloads: user.totalDownloads,
 			createdAt: user.createdAt,
 		};
 	} catch (error) {

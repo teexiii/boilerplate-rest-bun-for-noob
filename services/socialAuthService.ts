@@ -1,5 +1,3 @@
-// src/services/socialAuthService.ts
-
 import { AppRoleDefault } from '@/data';
 import { fetchSocialProfile } from '@/lib/auth/social/socialFetch';
 import { generateAccessToken } from '@/lib/auth/jwt';
@@ -10,6 +8,7 @@ import type { AuthResponse } from '@/types/auth';
 import type { SocialAuthInput, SocialProvider } from '@/types/socialAuth';
 import { toUserReponse } from '@/types/user';
 import { refreshTokenService } from '@/services/refreshTokenService';
+import { v4 } from 'uuid';
 
 export const socialAuthService = {
 	/**
@@ -31,6 +30,7 @@ export const socialAuthService = {
 		// If user doesn't exist, create a new one
 		if (!user) {
 			const defaultRole = await roleService.getRoleByName(AppRoleDefault.VIEWER);
+
 			if (!defaultRole) {
 				throw new Error('Default role not found');
 			}
@@ -40,20 +40,20 @@ export const socialAuthService = {
 				socialProfile.email?.split('@')[0] || `${input.provider}_${socialProfile.providerId.substring(0, 8)}`;
 
 			// Make sure the email is unique
-			const email = socialProfile.email;
+			const email = socialProfile?.email || `${baseUsername}-${v4()}@${input.provider}.com`;
 
 			// Create the user with social login
 			user = await userRepo.createWithSocial({
 				email,
-				name: socialProfile.name || baseUsername,
+				name: socialProfile?.name || baseUsername,
 				roleId: defaultRole.id,
 				emailVerified: true,
 				emailVerifiedAt: new Date(),
 				social: {
 					provider: input.provider,
-					providerId: socialProfile.providerId,
-					email: socialProfile.email,
-					profileData: socialProfile.providerData || {},
+					providerId: socialProfile?.providerId,
+					email,
+					profileData: socialProfile?.providerData || {},
 				},
 			});
 		} else if (
@@ -72,6 +72,7 @@ export const socialAuthService = {
 		if (!user?.emailVerified) {
 			await userRepo.markEmailAsVerified(user!.id);
 			user = await userRepo.findById(user!.id);
+
 			if (!user) throw new Error('User not found', { cause: 404 });
 		}
 

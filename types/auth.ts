@@ -1,7 +1,4 @@
-// src/types/auth.ts
-
 import type { UserResponse, UserWithRole } from '@/types/user';
-import type pino from 'pino';
 
 export interface TokenPayload {
 	userId: string;
@@ -73,10 +70,23 @@ export interface UserInRequest extends UserWithRole {
 	// isTokenExpiringSoon?: boolean;
 }
 
+/**
+ * Lightweight logger interface for request logging
+ * Avoids creating Pino child logger objects per request
+ */
+export interface RequestLogger {
+	info: (data: any) => void;
+	error: (data: any) => void;
+	warn: (data: any) => void;
+	debug: (data: any) => void;
+}
+
 export interface AuthenticatedRequest extends Request {
 	user?: UserInRequest;
-	log?: pino.Logger;
+	log?: RequestLogger;
 	logEnd?: (statusCode: number, error?: any) => void;
+	clientIp?: string | null;
+	socketIp?: string | null;
 }
 
 export interface RouteParams {

@@ -1,5 +1,5 @@
 const { exec } = require('child_process');
-const { detectPrivateKeyByFilePath } = require('diginext-utils/dist/file/detectPrivateKeyByFilePath');
+const { detectPrivateKeyByFilePath } = require('diginext-utils/file');
 
 async function runCommand(command, cb, fnError, fnStdout, fnStderr) {
 	(async () => {
