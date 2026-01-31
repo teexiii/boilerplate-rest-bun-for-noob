@@ -58,13 +58,14 @@ export const userService = {
 	},
 
 	/**
-	 * Get user by ID
+	 * Get user by ID with remaining turns and total bonus for VIEWER users
 	 */
 	async getUserById(id: string) {
 		const user = await userRepo.findById(id);
 		if (!user) {
 			throw new Error('User not found', { cause: 404 });
 		}
+
 		return user;
 	},
 

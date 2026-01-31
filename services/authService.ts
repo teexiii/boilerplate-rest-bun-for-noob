@@ -295,34 +295,40 @@ export const authService = {
 	async getLatestVerificationTokens(userId: string, type?: 'EMAIL_VERIFICATION' | 'PASSWORD_RESET' | 'EMAIL_CHANGE') {
 		const tokens = await verificationTokenRepo.getLatestByUserId(userId, type);
 
-		// Build rate limit info based on requested type
+		// Determine which types to count
+		const typesToCount: ('EMAIL_VERIFICATION' | 'PASSWORD_RESET' | 'EMAIL_CHANGE')[] = [];
+		if (!type || type === 'EMAIL_VERIFICATION') typesToCount.push('EMAIL_VERIFICATION');
+		if (!type || type === 'PASSWORD_RESET') typesToCount.push('PASSWORD_RESET');
+		if (!type || type === 'EMAIL_CHANGE') typesToCount.push('EMAIL_CHANGE');
+
+		// Get all counts in a single query
+		const counts = await verificationTokenRepo.countRecentTokensByTypes(userId, typesToCount, 60);
+
+		// Build rate limit info based on requested type (preserving original logic)
 		let rateLimitInfo: any = {};
 
 		if (!type || type === 'EMAIL_VERIFICATION') {
-			const count = await verificationTokenRepo.countRecentTokens(userId, 'EMAIL_VERIFICATION', 60);
 			rateLimitInfo = {
 				type: 'EMAIL_VERIFICATION',
-				count,
+				count: counts.get('EMAIL_VERIFICATION') || 0,
 				limit: 5,
 				// windowMinutes: 60,
 			};
 		}
 
 		if (!type || type === 'PASSWORD_RESET') {
-			const count = await verificationTokenRepo.countRecentTokens(userId, 'PASSWORD_RESET', 60);
 			rateLimitInfo = {
 				type: 'PASSWORD_RESET',
-				count,
+				count: counts.get('PASSWORD_RESET') || 0,
 				limit: 3,
 				// windowMinutes: 60,
 			};
 		}
 
 		if (!type || type === 'EMAIL_CHANGE') {
-			const count = await verificationTokenRepo.countRecentTokens(userId, 'EMAIL_CHANGE', 60);
 			rateLimitInfo = {
 				type: 'EMAIL_CHANGE',
-				count,
+				count: counts.get('EMAIL_CHANGE') || 0,
 				limit: 3,
 				// windowMinutes: 60,
 			};

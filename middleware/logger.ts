@@ -1,12 +1,29 @@
 import { logger } from '@/lib/logger';
 import type { AuthenticatedRequest, RouteParams } from '@/types/auth';
 
+// Fast request ID counter
+let requestCounter = 0;
+
+// Fast non-cryptographic request ID generation
+function generateRequestId(): string {
+	return `${Date.now()}-${(requestCounter = (requestCounter + 1) % 100000)}`;
+}
+
 export const requestLogger = async (req: AuthenticatedRequest, params: RouteParams): Promise<Response | null> => {
-	const requestId = crypto.randomUUID();
+	// Use fast timestamp-based ID instead of crypto.randomUUID
+	const requestId = generateRequestId();
 	const start = Date.now();
 
-	// Add logger to request
-	req.log = logger.child({ requestId });
+	// Use inline context instead of child logger to avoid object allocation
+	const logContext = { requestId };
+
+	// Create lightweight logging wrapper
+	req.log = {
+		info: (data: any) => logger.info({ ...data, ...logContext }),
+		error: (data: any) => logger.error({ ...data, ...logContext }),
+		warn: (data: any) => logger.warn({ ...data, ...logContext }),
+		debug: (data: any) => logger.debug({ ...data, ...logContext }),
+	};
 
 	// Log request
 	req.log.info({

@@ -3,12 +3,12 @@ import { generateRefreshToken } from '@/lib/auth/jwt';
 import { timeToMs } from '@/lib/auth/jwt/time';
 import { refreshTokenRepo } from '@/repositories/refreshTokenRepo';
 import type { UserWithRole } from '@/types/user';
-import { v7 } from 'uuid';
+import { v4 } from 'uuid';
 
 export const refreshTokenService = {
 	async generateRefreshTokenByUser(user: Pick<UserWithRole, 'id'>) {
 		try {
-			const id = v7();
+			const id = v4();
 			const expiration = timeToMs(appConfig.jwt.refreshTokenExpiresIn);
 			const expiresAt = new Date(Date.now() + expiration);
 			const refreshTokenToken = await generateRefreshToken(user, id);

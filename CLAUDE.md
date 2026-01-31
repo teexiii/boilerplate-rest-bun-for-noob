@@ -169,7 +169,7 @@ Output format:
 
 ## Key Directories
 
-- `routes/` - Route definitions
+- `routes/` - Route definitions - Should have DELETE GET POST PATCH PUT
 - `handlers/` - HTTP request handlers
 - `services/` - Business logic
 - `repositories/` - Data access layer

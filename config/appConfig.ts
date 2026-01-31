@@ -1,6 +1,6 @@
 import env from '@/config/env';
 import dayjs from 'dayjs';
-import { toInt } from 'diginext-utils/dist/object';
+import { toInt } from 'diginext-utils/object';
 import type { StringValue } from 'ms';
 
 const appConfig = {
@@ -88,7 +88,7 @@ const appConfig = {
 		},
 		getCdn(url = '') {
 			url = appConfig.normalize(url);
-			return `${env('UPFILE_BEST_FILE_SERVE', false)}/file${url}`;
+			return `${env('CLOUDFLARE_CDN_DOMAIN', false)}${url}`;
 		},
 	},
 } as const;

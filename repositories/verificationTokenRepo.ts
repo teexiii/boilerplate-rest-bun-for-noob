@@ -265,4 +265,43 @@ export const verificationTokenRepo = {
 			},
 		});
 	},
+
+	/**
+	 * Count tokens for multiple types in a single query using GROUP BY
+	 * Returns a Map with type as key and count as value
+	 */
+	async countRecentTokensByTypes(
+		userId: string,
+		types: VerificationTokenType[],
+		minutes: number = 60
+	): Promise<Map<VerificationTokenType, number>> {
+		if (types.length === 0) return new Map();
+
+		const cutoffDate = new Date(Date.now() - minutes * 60 * 1000);
+
+		const result = await db.$queryRaw<{ type: VerificationTokenType; count: bigint }[]>`
+			SELECT
+				type,
+				COUNT(*)::bigint as count
+			FROM verification_tokens
+			WHERE user_id = ${userId}::uuid
+				AND type::text = ANY(${types}::text[])
+				AND created_at >= ${cutoffDate}
+			GROUP BY type
+		`;
+
+		const countMap = new Map<VerificationTokenType, number>();
+
+		// Initialize all requested types with 0
+		for (const type of types) {
+			countMap.set(type, 0);
+		}
+
+		// Fill in actual counts from query result
+		for (const row of result) {
+			countMap.set(row.type, Number(row.count));
+		}
+
+		return countMap;
+	},
 };
