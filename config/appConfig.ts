@@ -28,7 +28,9 @@ const appConfig = {
 	},
 
 	sendgrid: {
-		apiKey: env('SENDGRID_API_KEY', false),
+		apiKey() {
+			return env('SENDGRID_API_KEY', false);
+		},
 		fromEmail: env('SENDGRID_FROM_EMAIL', true, 'noreply@ult.vn'),
 	},
 
