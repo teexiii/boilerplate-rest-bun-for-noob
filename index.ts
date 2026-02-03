@@ -5,8 +5,12 @@ import type { AuthenticatedRequest } from '@/types/auth';
 import { logger } from '@/lib/logger';
 import { requestLogger } from '@/middleware/logger';
 import appConfig from '@/config/appConfig';
+import { initDb } from '@/lib/server/db';
 
 (async () => {
+	// Initialize database connection before starting server
+	await initDb();
+
 	// Setup Bun server
 	const server = Bun.serve({
 		port: appConfig.port,
