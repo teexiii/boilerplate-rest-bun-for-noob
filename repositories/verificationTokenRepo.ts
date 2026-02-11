@@ -1,4 +1,5 @@
 import { db } from '@/lib/server/db';
+import { queueWrite } from '@/repositories/helper';
 import type { VerificationTokenType } from '@prisma/client';
 import { randomBytes } from 'crypto';
 
@@ -27,14 +28,16 @@ export const verificationTokenRepo = {
 		const expiration = expiresIn || TOKEN_EXPIRATION[type];
 		const expiresAt = new Date(Date.now() + expiration);
 
-		const verificationToken = await db.verificationToken.create({
-			data: {
-				token,
-				type,
-				userId,
-				expiresAt,
-			},
-		});
+		const verificationToken = await queueWrite(() =>
+			db.verificationToken.create({
+				data: {
+					token,
+					type,
+					userId,
+					expiresAt,
+				},
+			})
+		);
 
 		return verificationToken.token;
 	},

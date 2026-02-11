@@ -14,6 +14,7 @@ import { initDb } from '@/lib/server/db';
 	// Setup Bun server
 	const server = Bun.serve({
 		port: appConfig.port,
+		idleTimeout: 60, // seconds - increased from default 10s for long-running operations
 		async fetch(req: Request) {
 			// const url = new URL(req.url);
 			const method = req.method;
@@ -40,19 +41,18 @@ import { initDb } from '@/lib/server/db';
 					// Cast request to AuthenticatedRequest for middleware
 					const authReq = req as AuthenticatedRequest;
 
-					// Add logger middleware first
-					await requestLogger(authReq, params);
-
-					// Run other middleware
+					// Run auth middleware first (to populate req.user)
 					if (route.middleware && route.middleware.length > 0) {
 						for (const middleware of route.middleware) {
 							const result = await middleware(authReq, params);
 							if (result) {
-								authReq.logEnd?.(result.status);
 								return result;
 							}
 						}
 					}
+
+					// Add logger after auth middleware so req.user is available
+					await requestLogger(authReq, params);
 
 					// Run route handler
 					const next = await route.handler(authReq, params);

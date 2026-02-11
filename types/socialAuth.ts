@@ -5,6 +5,7 @@ export enum SocialProvider {
 	FACEBOOK = 'facebook',
 	DISCORD = 'discord',
 	GITHUB = 'github',
+	ZALO = 'zalo',
 }
 
 export interface SocialProfile {
@@ -20,6 +21,7 @@ export interface SocialAuthInput {
 	provider: SocialProvider;
 	accessToken: string;
 	redirectUri?: string;
+	codeVerifier?: string;
 }
 
 // Update to auth.ts
@@ -27,4 +29,5 @@ export interface SocialInput {
 	provider: SocialProvider;
 	accessToken: string;
 	redirectUri?: string;
+	codeVerifier?: string;
 }

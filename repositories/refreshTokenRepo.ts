@@ -1,15 +1,30 @@
 import { db } from '@/lib/server/db';
+import { queueWrite } from '@/repositories/helper';
 
 export const refreshTokenRepo = {
 	/**
 	 * Create a new refresh token
 	 */
-	async create(data: { id: string; token: string; expiresAt: Date; userId: string }) {
-		const refreshToken = await db.refreshToken.create({
-			data,
-		});
+	async create(data: { id?: string; token: string; expiresAt: Date; userId: string }) {
+		const refreshToken = await queueWrite(() =>
+			db.refreshToken.create({
+				data,
+			})
+		);
 
 		return refreshToken;
+	},
+
+	/**
+	 * Update token value
+	 */
+	async updateToken(id: string, token: string) {
+		return queueWrite(() =>
+			db.refreshToken.update({
+				where: { id },
+				data: { token },
+			})
+		);
 	},
 
 	/**
@@ -146,32 +161,38 @@ export const refreshTokenRepo = {
 	 * Mark a refresh token as revoked
 	 */
 	async revoke(id: string) {
-		return db.refreshToken.update({
-			where: { id },
-			data: { isRevoked: true },
-		});
+		return queueWrite(() =>
+			db.refreshToken.update({
+				where: { id },
+				data: { isRevoked: true },
+			})
+		);
 	},
 
 	/**
 	 * Revoke all tokens for a user
 	 */
 	async revokeAllForUser(userId: string) {
-		return db.refreshToken.updateMany({
-			where: { userId, isRevoked: false },
-			data: { isRevoked: true },
-		});
+		return queueWrite(() =>
+			db.refreshToken.updateMany({
+				where: { userId, isRevoked: false },
+				data: { isRevoked: true },
+			})
+		);
 	},
 
 	/**
 	 * Delete expired tokens
 	 */
 	async deleteExpired() {
-		return db.refreshToken.deleteMany({
-			where: {
-				expiresAt: {
-					lt: new Date(),
+		return queueWrite(() =>
+			db.refreshToken.deleteMany({
+				where: {
+					expiresAt: {
+						lt: new Date(),
+					},
 				},
-			},
-		});
+			})
+		);
 	},
 };

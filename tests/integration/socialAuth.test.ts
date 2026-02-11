@@ -1,7 +1,7 @@
 // src/tests/socialAuth.test.ts
 
 import { AppRoleDefault } from '@/data';
-import { db } from '@/lib/server/db';
+import { db, initDb } from '@/lib/server/db';
 import { matchRoute } from '@/lib/utils/router';
 import { routes } from '@/routes';
 import { SocialProvider } from '@/types/socialAuth';
@@ -49,6 +49,7 @@ describe('Social Auth API Integration Tests', () => {
 	let fetchSocialProfileSpy: any;
 
 	beforeAll(async () => {
+		await initDb();
 		// Setup test server
 		server = Bun.serve({
 			port: TEST_PORT,

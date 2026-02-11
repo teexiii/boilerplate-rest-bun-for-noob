@@ -90,7 +90,7 @@ const appConfig = {
 		},
 		getCdn(url = '') {
 			url = appConfig.normalize(url);
-			return `${env('CLOUDFLARE_CDN_DOMAIN', false)}${url}`;
+			return `${env('UPFILE_BEST_FILE_SERVE', false)}/file${url}`;
 		},
 	},
 } as const;

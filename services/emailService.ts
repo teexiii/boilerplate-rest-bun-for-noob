@@ -1,8 +1,11 @@
 import { isLocal, isProd } from '@/config';
 import appConfig from '@/config/appConfig';
+import justFetch from '@/lib/fetch/justFetch';
+import { makeHash } from '@/lib/security/hash';
 // import sgMail from '@sendgrid/mail';
 import { spawn } from 'bun';
 import { toBool } from 'diginext-utils/object';
+import { v4 } from 'uuid';
 
 interface SendEmailOptions {
 	to: string;
@@ -62,32 +65,25 @@ async function sendEmailNativeUbunntu(options: SendEmailOptions): Promise<void> 
 /**
  * Send email using SendGrid API
  */
-async function sendEmail(options: SendEmailOptions): Promise<void> {
-	// Skip sending emails in local or test environments
-
-	if (toBool(process.env.USE_EMAIL_ULT)) return sendEmailNativeUbunntu(options);
-
+async function sendEmail(options: SendEmailOptions) {
 	if (isLocal) return;
-	return sendEmailNativeUbunntu(options);
-	// console.log('SEND_EMAIL');
 
-	// const from = options.from || appConfig.sendgrid.fromEmail;
+	const nonce = v4();
+	const hash = `${nonce}.${makeHash(nonce)}`;
 
-	// try {
-	// 	const msg = {
-	// 		to: options.to,
-	// 		from,
-	// 		subject: options.subject,
-	// 		text: options.text,
-	// 		html: options.html || options.text,
-	// 	};
-
-	// 	const res = await sgMail.send(msg);
-	// } catch (error) {
-	// 	const err = error as any;
-	// 	console.error('SendGrid error:', err?.response?.body || err?.message);
-	// 	throw new Error(`Failed to send email: ${err?.response?.body?.errors?.[0]?.message || err?.message}`);
-	// }
+	return await justFetch({
+		path: 'https://email.ult.vn/api/email/send',
+		method: 'POST',
+		headers: {
+			hash,
+		},
+		data: {
+			to: options.to,
+			title: options.subject,
+			text: options.text,
+			html: options.html,
+		},
+	});
 }
 
 export const emailService = {
@@ -196,6 +192,59 @@ export const emailService = {
 			console.log(`Password reset email sent to ${email}`);
 		} catch (error) {
 			throw new Error(`sendPasswordResetEmail failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+		}
+	},
+
+	/**
+	 * Send home invitation email
+	 */
+	async sendHomeInviteEmail(email: string, homeName: string, inviterName: string | null, token: string) {
+		try {
+			const acceptUrl = appConfig.getWebappUrl(`/invite/${token}`);
+			const declineUrl = appConfig.getWebappUrl(`/invite/${token}/decline`);
+
+			if (isLocal) {
+				console.log(`[DEV] Home invite email for ${email}`);
+				console.log(`Home: ${homeName}, Inviter: ${inviterName || 'Someone'}`);
+				console.log(`Accept URL: ${acceptUrl}`);
+				console.log(`Decline URL: ${declineUrl}`);
+				return;
+			}
+
+			await sendEmail({
+				to: email,
+				subject: `You're invited to join "${homeName}"`,
+				text: `${inviterName || 'Someone'} has invited you to join "${homeName}". Accept: ${acceptUrl} or Decline: ${declineUrl}`,
+				html: `
+					<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+						<h1>You're invited!</h1>
+						<p><strong>${inviterName || 'Someone'}</strong> has invited you to join <strong>"${homeName}"</strong> on Baby Timeline.</p>
+						<p>Join this home to track baby activities together with family members.</p>
+						<div style="margin: 30px 0;">
+							<a href="${acceptUrl}"
+							   style="background-color: #22c55e; color: white; padding: 12px 24px;
+							          text-decoration: none; border-radius: 4px; display: inline-block; margin-right: 10px;">
+								Accept Invitation
+							</a>
+							<a href="${declineUrl}"
+							   style="background-color: #6b7280; color: white; padding: 12px 24px;
+							          text-decoration: none; border-radius: 4px; display: inline-block;">
+								Decline
+							</a>
+						</div>
+						<p style="color: #666; font-size: 14px;">
+							This invitation will expire in 7 days.
+						</p>
+						<p style="color: #999; font-size: 12px; margin-top: 40px;">
+							If you didn't expect this invitation, you can safely ignore this email.
+						</p>
+					</div>
+				`,
+			});
+
+			console.log(`Home invite email sent to ${email}`);
+		} catch (error) {
+			throw new Error(`sendHomeInviteEmail failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
 		}
 	},
 };

@@ -32,6 +32,12 @@ const oauthConfig = {
 		clientSecret: process.env.GITHUB_CLIENT_SECRET || '',
 		redirectUri: `${process.env.APP_URL}/auth/callback/github`,
 	},
+	[SocialProvider.ZALO]: {
+		tokenUrl: 'https://oauth.zaloapp.com/v4/access_token',
+		clientId: process.env.ZALO_APP_ID || '',
+		clientSecret: process.env.ZALO_SECRET_KEY || '',
+		redirectUri: `${process.env.APP_URL}/auth/callback/zalo`,
+	},
 };
 
 export const oauthCallbackHandler = {

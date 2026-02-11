@@ -11,6 +11,10 @@ function generateRequestId(): string {
 
 export const requestLogger = async (req: AuthenticatedRequest, params: RouteParams): Promise<Response | null> => {
 	// Use fast timestamp-based ID instead of crypto.randomUUID
+	if (req.url.includes('/hz')) {
+		return null;
+	}
+
 	const requestId = generateRequestId();
 	const start = Date.now();
 

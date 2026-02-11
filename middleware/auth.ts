@@ -69,7 +69,6 @@ export async function authenticate(req: AuthenticatedRequest, params: RouteParam
 			// isTokenExpiringSoon,
 			isAdmin: user?.role.name == AppRoleDefault.ADMIN,
 		};
-
 		return null; // Continue to next middleware/handler
 	} catch (error) {
 		if ((error as any).cause == 'TOKEN_EXPIRED') return fail(`${(error as any).message || 'Invalid token'}`, 498);

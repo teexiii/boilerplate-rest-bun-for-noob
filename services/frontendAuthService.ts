@@ -28,6 +28,12 @@ const oauthConfig = {
 		authUrl: 'https://github.com/login/oauth/authorize',
 		scope: 'user:email',
 	},
+	[SocialProvider.ZALO]: {
+		clientId: process.env.ZALO_APP_ID || '',
+		redirectUri: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback/zalo`,
+		authUrl: 'https://oauth.zaloapp.com/v4/permission',
+		scope: '',
+	},
 };
 
 export const frontendAuthService = {

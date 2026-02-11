@@ -1,3 +1,5 @@
+import { queue, type QueueObject } from 'async';
+
 /**
  * Check if all values in an object are null
  */
@@ -64,4 +66,67 @@ export function nestFlatObject<T = any>(flatObj: Record<string, any>): T {
 	nullifyEmptyObjects(result);
 
 	return result as T;
+}
+
+// ============================================
+// Background Task Queue (Fire-and-Forget)
+// ============================================
+
+interface BackgroundTask {
+	name: string;
+	fn: () => Promise<void>;
+}
+
+/**
+ * Queue for fire-and-forget background tasks
+ * Use for: cache invalidation, logging, analytics, push notifications
+ * DO NOT use for: operations where you need the result
+ */
+export const backgroundQueue: QueueObject<BackgroundTask> = queue(async (task: BackgroundTask) => {
+	try {
+		await task.fn();
+	} catch (error) {
+		console.error(`[BackgroundQueue] Task "${task.name}" failed:`, error);
+	}
+}, 50); // Concurrency of 50
+
+/**
+ * Add a fire-and-forget task to the background queue
+ */
+export function queueBackgroundTask(name: string, fn: () => Promise<void>): void {
+	backgroundQueue.push({ name, fn });
+}
+
+// ============================================
+// Rate-Limited Write Queue (Optional)
+// ============================================
+
+interface WriteTask<T> {
+	fn: () => Promise<T>;
+	resolve: (value: T) => void;
+	reject: (error: Error) => void;
+}
+
+/**
+ * Rate-limited queue for DB writes
+ * Returns a Promise so you still get the result
+ * Use when you need to limit concurrent writes but still need results
+ */
+export const writeQueue: QueueObject<WriteTask<any>> = queue(async (task: WriteTask<any>) => {
+	try {
+		const result = await task.fn();
+		task.resolve(result);
+	} catch (error) {
+		task.reject(error as Error);
+	}
+}, 20); // Lower concurrency for writes
+
+/**
+ * Execute a write operation through the rate-limited queue
+ * Still returns the result, just rate-limited
+ */
+export function queueWrite<T>(fn: () => Promise<T>): Promise<T> {
+	return new Promise((resolve, reject) => {
+		writeQueue.push({ fn, resolve, reject });
+	});
 }
