@@ -89,7 +89,7 @@
 
 ## CONFIGURATION
 .\config\
-  - AppConfig.ts
+  - appConfig.ts
   - env.ts
   - index.ts
 

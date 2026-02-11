@@ -1,4 +1,5 @@
 import { db } from '@/lib/server/db';
+import { queueWrite } from '@/repositories/helper';
 import { userCache } from '@/caching/userCache';
 import type { UserWithRole, UserCreateInput, UserUpdateInput } from '@/types/user';
 import type { Social } from '@prisma/client';
@@ -138,7 +139,7 @@ export const userRepo = {
 	 * Find user by ID (with caching)
 	 */
 	async findById(id: string) {
-		// Try cache first
+		// // Try cache first
 		const cached = await userCache.getById(id);
 		if (cached) return cached;
 
@@ -181,7 +182,7 @@ export const userRepo = {
 	 * Find user by email (with caching)
 	 */
 	async findByEmail(email: string) {
-		// Try cache first
+		// // Try cache first
 		const cached = await userCache.getByEmail(email);
 		if (cached) return cached;
 
@@ -379,10 +380,12 @@ export const userRepo = {
 	 * Create a new user
 	 */
 	async create(data: UserCreateInput): Promise<IUser> {
-		const user = await db.user.create({
-			data,
-			include,
-		});
+		const user = await queueWrite(() =>
+			db.user.create({
+				data,
+				include,
+			})
+		);
 
 		// Invalidate list caches since a new user was added
 		await userCache.clearLists();
@@ -401,7 +404,7 @@ export const userRepo = {
 		});
 
 		// Invalidate cache for this user and all lists
-		await userCache.invalidate(id, user.email);
+		await Promise.all([userCache.invalidate(id, user.email)]);
 
 		return user;
 	},
@@ -433,9 +436,9 @@ export const userRepo = {
 			where: { id },
 		});
 
-		// Invalidate cache for this user and all lists
+		// Invalidate cache for this user and all lists + home cache
 		if (user) {
-			await userCache.invalidate(id, user.email);
+			await Promise.all([userCache.invalidate(id, user.email)]);
 		}
 	},
 
@@ -561,24 +564,26 @@ export const userRepo = {
 			profileData?: any;
 		};
 	}): Promise<IUser> {
-		const user = await db.user.create({
-			data: {
-				email: data.email,
-				name: data.name,
-				roleId: data.roleId,
-				emailVerified: data.emailVerified,
-				emailVerifiedAt: data.emailVerifiedAt,
-				socials: {
-					create: {
-						provider: data.social.provider,
-						providerId: data.social.providerId,
-						email: data.social.email,
-						profileData: data.social.profileData,
+		const user = await queueWrite(() =>
+			db.user.create({
+				data: {
+					email: data.email,
+					name: data.name,
+					roleId: data.roleId,
+					emailVerified: data.emailVerified,
+					emailVerifiedAt: data.emailVerifiedAt,
+					socials: {
+						create: {
+							provider: data.social.provider,
+							providerId: data.social.providerId,
+							email: data.social.email,
+							profileData: data.social.profileData,
+						},
 					},
 				},
-			},
-			include,
-		});
+				include,
+			})
+		);
 
 		// Invalidate list caches since a new user was added
 		await userCache.clearLists();

@@ -16,7 +16,12 @@ export const socialAuthService = {
 	 */
 	async social(input: SocialAuthInput): Promise<AuthResponse> {
 		// Fetch profile from social provider
-		const socialProfile = await fetchSocialProfile(input.provider, input.accessToken, input.redirectUri);
+		const socialProfile = await fetchSocialProfile(
+			input.provider,
+			input.accessToken,
+			input.redirectUri,
+			input.codeVerifier
+		);
 		if (!socialProfile?.providerId) throw new Error('Unsupported social provider', { cause: 401 });
 
 		// Find existing user by provider and providerId
@@ -92,7 +97,12 @@ export const socialAuthService = {
 	 */
 	async linkSocialAccount(userId: string, input: SocialAuthInput): Promise<void> {
 		// Fetch profile from social provider
-		const socialProfile = await fetchSocialProfile(input.provider, input.accessToken, input.redirectUri);
+		const socialProfile = await fetchSocialProfile(
+			input.provider,
+			input.accessToken,
+			input.redirectUri,
+			input.codeVerifier
+		);
 
 		// Check if this social social is already linked to another user
 		const existingLink = await socialRepo.findByProviderAndId(input.provider, socialProfile.providerId);

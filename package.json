@@ -1,10 +1,10 @@
 {
 	"name": "boilerplate-bun-for-noob",
-	"version": "0.7.3",
+	"version": "0.9.1",
 	"module": "index.ts",
 	"type": "module",
 	"scripts": {
-		"start": "npx prisma db push && bun run index.ts",
+		"start": "bun run index.ts",
 		"build": "bun build ./index.ts --outdir ./dist --target bun --minify --sourcemap",
 		"test": "bun --env-file=.env.test.local test --coverage",
 		"test:setup": "bun --env-file=.env.test.local run prisma/test-setup.ts",
@@ -34,7 +34,7 @@
 		"eslint-plugin-import": "2.31.0",
 		"globals": "16.0.0",
 		"prettier": "3.5.3",
-		"prisma": "6.19.1",
+		"prisma": "6.19.2",
 		"typescript-eslint": "8.24.1"
 	},
 	"peerDependencies": {

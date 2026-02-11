@@ -1,5 +1,6 @@
 import { userHandler } from '@/handlers/userHandler';
 import { authenticate, requireAdmin, requireSelfOrAdmin } from '@/middleware/auth';
+import { requireHash } from '@/middleware/security';
 import type { Route } from '@/types/auth';
 
 export const userRoutes: Route[] = [
@@ -7,25 +8,25 @@ export const userRoutes: Route[] = [
 	{
 		path: '/api/user',
 		method: 'POST',
-		middleware: [authenticate, requireAdmin],
+		middleware: [requireHash, authenticate, requireAdmin],
 		handler: userHandler.createUser,
 	},
 	{
 		path: '/api/users',
 		method: 'GET',
-		middleware: [authenticate, requireAdmin],
+		middleware: [requireHash, authenticate, requireAdmin],
 		handler: userHandler.getAllUsers,
 	},
 	{
 		path: '/api/users/:id',
 		method: 'DELETE',
-		middleware: [authenticate, requireAdmin],
+		middleware: [requireHash, authenticate, requireAdmin],
 		handler: userHandler.deleteUser,
 	},
 	{
 		path: '/api/users/search',
 		method: 'GET',
-		middleware: [authenticate, requireAdmin],
+		middleware: [requireHash, authenticate, requireAdmin],
 		handler: userHandler.searchUsers,
 	},
 
@@ -33,7 +34,7 @@ export const userRoutes: Route[] = [
 	{
 		path: '/api/users/:id/role',
 		method: 'PATCH',
-		middleware: [authenticate, requireAdmin],
+		middleware: [requireHash, authenticate, requireAdmin],
 		handler: userHandler.changeUserRole,
 	},
 
@@ -41,13 +42,13 @@ export const userRoutes: Route[] = [
 	{
 		path: '/api/users/:id',
 		method: 'GET',
-		middleware: [authenticate, requireSelfOrAdmin('id')],
+		middleware: [requireHash, authenticate, requireSelfOrAdmin('id')],
 		handler: userHandler.getUserById,
 	},
 	{
 		path: '/api/users/:id',
 		method: 'PUT',
-		middleware: [authenticate, requireSelfOrAdmin('id')],
+		middleware: [requireHash, authenticate, requireSelfOrAdmin('id')],
 		handler: userHandler.updateUser,
 	},
 
@@ -55,19 +56,19 @@ export const userRoutes: Route[] = [
 	{
 		path: '/api/profile',
 		method: 'GET',
-		middleware: [authenticate],
+		middleware: [requireHash, authenticate],
 		handler: userHandler.getProfile,
 	},
 	{
 		path: '/api/profile',
 		method: 'PUT',
-		middleware: [authenticate],
+		middleware: [requireHash, authenticate],
 		handler: userHandler.updateProfile,
 	},
 	{
 		path: '/api/profile/change-password',
 		method: 'POST',
-		middleware: [authenticate],
+		middleware: [requireHash, authenticate],
 		handler: userHandler.changePassword,
 	},
 ];

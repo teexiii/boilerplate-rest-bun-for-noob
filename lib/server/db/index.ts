@@ -112,9 +112,7 @@ async function createPrismaClient(): Promise<PrismaClient> {
 		DB_CONFIG.maxRetries
 	);
 
-	console.log(
-		`[DB] Connected successfully (pool: ${DB_CONFIG.connectionLimit}, timeout: ${DB_CONFIG.poolTimeout}s)`
-	);
+	console.log(`[DB] Connected successfully (pool: ${DB_CONFIG.connectionLimit}, timeout: ${DB_CONFIG.poolTimeout}s)`);
 
 	return client;
 }
@@ -213,9 +211,7 @@ export async function initDb(): Promise<PrismaClient> {
 const dbProxy = new Proxy({} as PrismaClient, {
 	get(_, prop: string | symbol) {
 		if (!dbInstance && !global.cachedPrisma) {
-			throw new Error(
-				'[DB] Database not initialized. Call `await initDb()` before using `db`.'
-			);
+			throw new Error('[DB] Database not initialized. Call `await initDb()` before using `db`.');
 		}
 		const client = dbInstance || global.cachedPrisma!;
 		const value = client[prop as keyof PrismaClient];

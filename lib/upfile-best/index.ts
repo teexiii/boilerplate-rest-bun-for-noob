@@ -1,13 +1,16 @@
-import appConfig from '@/config/appConfig';
 import justFetch from '@/lib/fetch/justFetch';
-import type { FetchResponse } from '@/lib/fetch/type';
-import { isValidUUID } from '@/lib/utils/uuid';
+import { getFileExtension, getFileNameWithoutExtension } from 'diginext-utils/string';
+import mime from 'mime';
 import { makeSlug } from 'diginext-utils/makeSlug';
-import { randomFileName, getExtensionFromMimeType, getFileNameWithoutExtension } from 'diginext-utils/string';
+import { v7s } from '@/lib/utils/uuid';
+import { v7 } from 'uuid';
+import appConfig from '@/config/appConfig';
+import type { FetchResponse } from '@/lib/fetch/type';
 
-/**
- * Response structure from Upfile Best API
- */
+// ============================================================================
+// Types
+// ============================================================================
+
 export interface IUpfileBest {
 	id: string;
 	name: string;
@@ -19,9 +22,6 @@ export interface IUpfileBest {
 	storageSpaceId: string;
 }
 
-/**
- * Upload options for file uploads
- */
 export interface UploadFileOptions {
 	file: File;
 	fileName?: string;
@@ -29,9 +29,6 @@ export interface UploadFileOptions {
 	mimeType?: string;
 }
 
-/**
- * Upload options for base64 uploads
- */
 export interface UploadBase64Options {
 	base64: string;
 	fileName?: string;
@@ -39,9 +36,6 @@ export interface UploadBase64Options {
 	mimeType: string;
 }
 
-/**
- * Internal upload request options
- */
 interface UploadRequest {
 	buffer: Buffer;
 	fileName: string;
@@ -53,69 +47,34 @@ interface UploadRequest {
 // Utilities
 // ============================================================================
 
-/**
- * Generates a safe, unique filename
- * @param originalName - Original filename (can be empty)
- * @param mimeType - MIME type of the file
- * @returns Generated filename with extension
- */
-const generateSafeFileName = (originalName: string, mimeType: string): string => {
-	const ext = getExtensionFromMimeType(mimeType);
-
-	if (!originalName) {
-		return `${randomFileName(makeSlug(process.env.TITLE || 'file'), 4)}.${ext}`;
-	}
-
-	const fileNameWithoutExt = getFileNameWithoutExtension(originalName);
-	const isUuid = isValidUUID(fileNameWithoutExt);
-
-	if (isUuid) {
-		return `${fileNameWithoutExt}.${ext || 'png'}`;
-	}
-
-	const safeName = randomFileName(makeSlug(fileNameWithoutExt), 4);
-	return `${safeName}.${ext || 'png'}`;
+/** Build a unique safe filename: `{uuid}-{slug}.{ext}` or `{uuid}.{ext}` */
+const buildSafeFileName = (originalName: string, mimeType: string): string => {
+	const ext = getFileExtension(originalName) || mime.getExtension(mimeType) || 'png';
+	const slug = makeSlug(getFileNameWithoutExtension(originalName) || '');
+	return slug ? `${v7s()}-${slug}.${ext}` : `${v7()}.${ext}`;
 };
 
-/**
- * Converts a File to Buffer and calculates its size
- * This is necessary because proxies like Cloudflare strip Content-Length headers
- * @param file - File object to convert
- * @returns Buffer with actual size
- */
 const fileToBuffer = async (file: File): Promise<Buffer> => {
 	const arrayBuffer = await file.arrayBuffer();
 	return Buffer.from(arrayBuffer);
 };
 
-/**
- * Decodes base64 string to Buffer
- * @param base64 - Base64 encoded string (with or without data URL prefix)
- * @returns Buffer containing decoded data
- */
 const base64ToBuffer = (base64: string): Buffer => {
 	const base64Data = base64.replace(/^data:[^;]+;base64,/, '');
 	return Buffer.from(base64Data, 'base64');
 };
 
 // ============================================================================
-// Core Upload Logic
+// Core
 // ============================================================================
 
-/**
- * Low-level upload function that sends data to Upfile Best API
- * @param request - Upload request with buffer and metadata
- * @returns Upload response from API
- */
-export const uploadToServer = async ({
+const uploadToServer = async ({
 	buffer,
 	fileName,
 	mimeType,
 	dir = '',
 }: UploadRequest): Promise<FetchResponse<IUpfileBest>> => {
 	'use server';
-
-	const actualSize = buffer.length;
 
 	return await justFetch<IUpfileBest>({
 		method: 'POST',
@@ -124,9 +83,9 @@ export const uploadToServer = async ({
 		timeout: 1000 * 60 * 10,
 		headers: {
 			'Content-Disposition': `attachment; filename="${fileName}"`,
-			'Content-Length': `${actualSize}`,
+			'Content-Length': `${buffer.length}`,
 			'Content-Type': mimeType,
-			'upf-base-dir': dir || appConfig.upfileBest.getUploadDir(),
+			'upf-base-dir': appConfig.upfileBest.getUploadDir(dir),
 			'token-api': process.env.UPFILE_BEST_TOKEN_API!,
 		},
 	});
@@ -136,21 +95,6 @@ export const uploadToServer = async ({
 // Public API
 // ============================================================================
 
-/**
- * Uploads a file from base64 string
- * @param options - Base64 upload options
- * @returns Upload response or undefined on error
- *
- * @example
- * ```ts
- * const result = await uploadByBase64({
- *   base64: 'data:image/png;base64,iVBORw0KG...',
- *   fileName: 'avatar.png',
- *   mimeType: 'image/png',
- *   dir: 'avatars'
- * });
- * ```
- */
 export const uploadByBase64 = async ({
 	base64,
 	fileName,
@@ -161,14 +105,9 @@ export const uploadByBase64 = async ({
 
 	try {
 		const buffer = base64ToBuffer(base64);
-		const safeFileName = fileName || generateSafeFileName('', mimeType);
+		const safeFileName = buildSafeFileName(fileName || '', mimeType);
 
-		return await uploadToServer({
-			buffer,
-			fileName: safeFileName,
-			mimeType,
-			dir,
-		});
+		return await uploadToServer({ buffer, fileName: safeFileName, mimeType, dir });
 	} catch (error) {
 		console.error('[uploadByBase64] Upload failed:', {
 			error: error instanceof Error ? error.message : 'Unknown error',
@@ -179,21 +118,6 @@ export const uploadByBase64 = async ({
 	}
 };
 
-/**
- * Uploads a File object
- * @param options - File upload options
- * @returns Upload response or undefined on error
- *
- * @example
- * ```ts
- * const result = await uploadByFile({
- *   file: fileFromInput,
- *   fileName: 'custom-name.jpg', // Optional
- *   dir: 'uploads/images',
- *   mimeType: 'image/jpeg' // Optional, will use file.type if not provided
- * });
- * ```
- */
 export const uploadByFile = async ({
 	file,
 	fileName,
@@ -204,17 +128,12 @@ export const uploadByFile = async ({
 
 	try {
 		const resolvedMimeType = mimeType || file.type;
-		const safeFileName = fileName || generateSafeFileName(file.name, resolvedMimeType);
+		const safeFileName = buildSafeFileName(fileName || file.name, resolvedMimeType);
 
 		// Convert File to Buffer to ensure we have actual size
 		// This handles cases where Content-Length is stripped by proxies (like Cloudflare)
 		const buffer = await fileToBuffer(file);
-		return await uploadToServer({
-			buffer,
-			fileName: safeFileName,
-			mimeType: resolvedMimeType,
-			dir,
-		});
+		return await uploadToServer({ buffer, fileName: safeFileName, mimeType: resolvedMimeType, dir });
 	} catch (error) {
 		console.error('[uploadByFile] Upload failed:', {
 			error: error instanceof Error ? error.message : 'Unknown error',

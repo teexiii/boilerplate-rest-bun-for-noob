@@ -1,53 +1,35 @@
 # syntax=docker/dockerfile:1.4
 
-# ===================================
-#       BUILD ARGUMENTS
-# ===================================
 ARG NODE_VERSION=20.15
-ARG ALPINE_VERSION=3.19
-ARG UBUNTU_VERSION=22.04
 
 # ===================================
 #       PHASE 1 - DEPENDENCIES
 # ===================================
-FROM node:${NODE_VERSION} AS deps
+FROM reg.ult.vn/template/bun-api:v0-7-3-a AS deps
 WORKDIR /app
-
-RUN npm i -g bun
 
 # Copy package files and remove version
 COPY package.json prisma ./
-RUN VERSION=$(node -p "require('./package.json').version") 
 
-RUN bun install --force
+RUN bun install
 
 # ===================================
-#       PHASE 2 - BUILDER
+#       PHASE 2 - runner
 # ===================================
-FROM node:${NODE_VERSION} AS builder
-
-RUN npm i -g bun
-
-# Create non-root user and group
-RUN addgroup --system --gid 1001 nodejs \
-  && adduser --system --uid 1001 user \
-  && mkdir -p /usr/app \
-  && chown -R user:nodejs /usr/app
+FROM reg.ult.vn/template/bun-api-runner:v0-7-3-b AS runner
 
 WORKDIR /usr/app
 
-# Copy application files with explicit ownership
-COPY --from=deps --chown=user:nodejs /app/node_modules ./node_modules
-COPY . .
-COPY ./.env.dev ./.env
+# Copy dependencies from deps stage
+COPY --chown=runner:nodejs --from=deps /app/node_modules ./node_modules
+COPY --chown=runner:nodejs . .
+COPY --chown=runner:nodejs ./.env.dev ./.env
 
-# Switch to non-root user
-USER user
+# Switch to non-root runner
+USER runner
 
 # Expose application port
 EXPOSE 3000
-
-ENV NODE_ENV=production
 
 # Start the application with explicit host binding
 CMD ["bun", "run", "start"]

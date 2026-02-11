@@ -1,5 +1,5 @@
 import { AppRoleDefault } from '@/data';
-import { db } from '@/lib/server/db';
+import { db, initDb } from '@/lib/server/db';
 import { matchRoute } from '@/lib/utils/router';
 import { routes } from '@/routes';
 import type { AuthenticatedRequest } from '@/types/auth';
@@ -22,6 +22,7 @@ let refreshToken: string;
 
 describe('Auth API Integration Tests', () => {
 	beforeAll(async () => {
+		await initDb();
 		// Setup test server
 		server = Bun.serve({
 			port: TEST_PORT,

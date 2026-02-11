@@ -1,4 +1,6 @@
 import { db } from '@/lib/server/db';
+import { queueWrite } from '@/repositories/helper';
+import { userCache } from '@/caching/userCache';
 import type { RoleCreateInput, RoleUpdateInput } from '@/types/role';
 
 export const roleRepo = {
@@ -38,31 +40,45 @@ export const roleRepo = {
 	 * Create role
 	 */
 	async create(data: RoleCreateInput) {
-		return db.role.create({
-			data: {
-				name: data.name,
-				description: data.description,
-			},
-		});
+		return queueWrite(() =>
+			db.role.create({
+				data: {
+					name: data.name,
+					description: data.description,
+				},
+			})
+		);
 	},
 
 	/**
 	 * Update role
 	 */
 	async update(id: string, data: RoleUpdateInput) {
-		return db.role.update({
-			where: { id },
-			data,
-		});
+		const role = await queueWrite(() =>
+			db.role.update({
+				where: { id },
+				data,
+			})
+		);
+
+		// Invalidate all user caches (users include role data)
+		await userCache.clearAll();
+
+		return role;
 	},
 
 	/**
 	 * Delete role
 	 */
 	async delete(id: string) {
-		return db.role.delete({
+		const role = await db.role.delete({
 			where: { id },
 		});
+
+		// Invalidate all user caches (users include role data)
+		await userCache.clearAll();
+
+		return role;
 	},
 
 	/**

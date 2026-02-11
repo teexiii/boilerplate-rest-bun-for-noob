@@ -4,7 +4,7 @@ import { SocialProvider, type SocialProfile } from '@/types/socialAuth';
 
 // Interface for provider-specific API handlers
 interface SocialProviderHandler {
-	fetchProfile(accessToken: string, redirectUri?: string): Promise<SocialProfile>;
+	fetchProfile(accessToken: string, redirectUri?: string, codeVerifier?: string): Promise<SocialProfile>;
 }
 
 /**
@@ -165,12 +165,66 @@ const githubProvider: SocialProviderHandler = {
 	},
 };
 
+/**
+ * Fetch user profile from Zalo (OAuth V4 + PKCE)
+ *
+ * Unlike other providers, Zalo sends an authorization code (not an access token).
+ * The server must exchange it for an access token using PKCE, then fetch the profile.
+ *
+ * Note: Zalo does NOT provide user email in its profile API.
+ */
+const zaloProvider: SocialProviderHandler = {
+	async fetchProfile(accessToken: string, _redirectUri?: string, codeVerifier?: string): Promise<SocialProfile> {
+		const appId = process.env.ZALO_APP_ID;
+		const secretKey = process.env.ZALO_SECRET_KEY;
+
+		if (!appId || !secretKey) {
+			throw new Error('Zalo app credentials not configured', { cause: 500 });
+		}
+
+		const profileResponse = await fetch('https://graph.zalo.me/v2.0/me?fields=id,name,picture,email', {
+			headers: { access_token: accessToken },
+		});
+
+		console.log('id,name,picture,email');
+
+		if (!profileResponse.ok) {
+			throw new Error(`Zalo API error: ${profileResponse.statusText}`, { cause: 401 });
+		}
+
+		const profileData = await profileResponse.json();
+
+		console.log(`profileData :>> `, profileData);
+
+		if (profileData.error) {
+			throw new Error(`Zalo profile error: ${profileData.message || profileData.error}`, { cause: 401 });
+		}
+
+		const zaloId = profileData.id;
+		const pictureUrl = profileData.picture?.data?.url || null;
+
+		return {
+			id: zaloId,
+			provider: SocialProvider.ZALO,
+			providerId: zaloId,
+			email: '', // Zalo does not provide email
+			name: profileData.name || `Zalo User ${zaloId}`,
+			providerData: {
+				id: zaloId,
+				name: profileData.name,
+				picture: pictureUrl,
+			},
+		};
+	},
+};
+
 // Map of provider handlers
 const providerHandlers: Record<SocialProvider, SocialProviderHandler> = {
 	[SocialProvider.GOOGLE]: googleProvider,
 	[SocialProvider.FACEBOOK]: facebookProvider,
 	[SocialProvider.DISCORD]: discordProvider,
 	[SocialProvider.GITHUB]: githubProvider,
+	[SocialProvider.ZALO]: zaloProvider,
 };
 
 /**
@@ -179,7 +233,8 @@ const providerHandlers: Record<SocialProvider, SocialProviderHandler> = {
 export async function fetchSocialProfile(
 	provider: SocialProvider,
 	accessToken: string,
-	redirectUri?: string
+	redirectUri?: string,
+	codeVerifier?: string
 ): Promise<SocialProfile> {
 	const handler = providerHandlers[provider];
 
@@ -187,5 +242,5 @@ export async function fetchSocialProfile(
 		throw new Error(`Unsupported social provider: ${provider}`, { cause: 401 });
 	}
 
-	return handler.fetchProfile(accessToken, redirectUri);
+	return handler.fetchProfile(accessToken, redirectUri, codeVerifier);
 }

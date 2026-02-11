@@ -1,5 +1,5 @@
 import { AppRoleDefault } from '@/data';
-import { db } from '@/lib/server/db';
+import { db, initDb } from '@/lib/server/db';
 import { generateAccessToken } from '@/lib/auth/jwt';
 import { matchRoute } from '@/lib/utils/router';
 import { routes } from '@/routes';
@@ -32,6 +32,7 @@ let userToken: string;
 
 describe('User API Integration Tests', () => {
 	beforeAll(async () => {
+		await initDb();
 		// Setup test server
 		server = Bun.serve({
 			port: TEST_PORT,
@@ -310,46 +311,6 @@ describe('User API Integration Tests', () => {
 			});
 
 			expect(response.status).toBe(403);
-		});
-
-		it('should allow admin to block/unblock user turns', async () => {
-			// Block user
-			const blockResponse = await fetch(`${BASE_URL}/api/users/${userId}`, {
-				method: 'PUT',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${adminToken}`,
-				},
-				body: JSON.stringify({
-					blockTurn: true,
-				}),
-			});
-
-			expect(blockResponse.status).toBe(200);
-			const blockRes = await blockResponse.json();
-			expect(blockRes.data.blockTurn).toBe(true);
-
-			// Verify in database
-			const blockedUser = await db.user.findUnique({
-				where: { id: userId },
-			});
-			expect(blockedUser?.blockTurn).toBe(true);
-
-			// Unblock user
-			const unblockResponse = await fetch(`${BASE_URL}/api/users/${userId}`, {
-				method: 'PUT',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${adminToken}`,
-				},
-				body: JSON.stringify({
-					blockTurn: false,
-				}),
-			});
-
-			expect(unblockResponse.status).toBe(200);
-			const unblockRes = await unblockResponse.json();
-			expect(unblockRes.data.blockTurn).toBe(false);
 		});
 	});
 

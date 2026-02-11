@@ -1,5 +1,6 @@
 import { roleHandler } from '@/handlers/roleHandler';
 import { authenticate, requireAdmin } from '@/middleware/auth';
+import { requireHash } from '@/middleware/security';
 import type { Route } from '@/types/auth';
 
 export const roleRoutes: Route[] = [
@@ -7,7 +8,7 @@ export const roleRoutes: Route[] = [
 	{
 		path: '/api/roles',
 		method: 'GET',
-		middleware: [authenticate],
+		middleware: [requireHash, authenticate],
 		handler: roleHandler.getAllRoles,
 	},
 
@@ -15,31 +16,31 @@ export const roleRoutes: Route[] = [
 	{
 		path: '/api/roles',
 		method: 'POST',
-		middleware: [authenticate, requireAdmin],
+		middleware: [requireHash, authenticate, requireAdmin],
 		handler: roleHandler.createRole,
 	},
 	{
 		path: '/api/roles/:id',
 		method: 'GET',
-		middleware: [authenticate, requireAdmin],
+		middleware: [requireHash, authenticate, requireAdmin],
 		handler: roleHandler.getRoleById,
 	},
 	{
 		path: '/api/roles/:id',
 		method: 'PUT',
-		middleware: [authenticate, requireAdmin],
+		middleware: [requireHash, authenticate, requireAdmin],
 		handler: roleHandler.updateRole,
 	},
 	{
 		path: '/api/roles/:id',
 		method: 'DELETE',
-		middleware: [authenticate, requireAdmin],
+		middleware: [requireHash, authenticate, requireAdmin],
 		handler: roleHandler.deleteRole,
 	},
 	{
 		path: '/api/roles/:id/users',
 		method: 'GET',
-		middleware: [authenticate, requireAdmin],
+		middleware: [requireHash, authenticate, requireAdmin],
 		handler: roleHandler.getRoleUsers,
 	},
 ];

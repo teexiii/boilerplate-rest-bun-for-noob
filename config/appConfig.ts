@@ -48,7 +48,7 @@ const appConfig = {
 	redis: {
 		// redis[s]://[[username][:password]@][host][:port][/db-number]
 		cacheDuration: env('REDIS_CACHE_DURATION', true, 60),
-		prov: env('REDIST_PROV', process.env.ENV == 'local', 'redis://'),
+		prov: env('REDIS_PROV', process.env.ENV == 'local', 'redis://'),
 		host: env('REDIS_HOST', process.env.ENV == 'local', '127.0.0.1'),
 		port: toInt(env('REDIS_PORT', process.env.ENV == 'local', 6379)),
 		password: env('REDIS_PASSWORD'),
@@ -90,7 +90,7 @@ const appConfig = {
 		},
 		getCdn(url = '') {
 			url = appConfig.normalize(url);
-			return `${env('CLOUDFLARE_CDN_DOMAIN', false)}${url}`;
+			return `${env('UPFILE_BEST_FILE_SERVE', false)}/file${url}`;
 		},
 	},
 } as const;

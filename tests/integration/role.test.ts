@@ -2,7 +2,7 @@
 
 import { AppRoleDefault } from '@/data';
 import { hashPassword } from '@/lib/auth/password';
-import { db } from '@/lib/server/db';
+import { db, initDb } from '@/lib/server/db';
 import { generateAccessToken } from '@/lib/auth/jwt';
 import { matchRoute } from '@/lib/utils/router';
 import { routes } from '@/routes';
@@ -39,6 +39,7 @@ let testRoleId: string;
 
 describe('Role API Integration Tests', () => {
 	beforeAll(async () => {
+		await initDb();
 		// Setup test server
 		server = Bun.serve({
 			port: TEST_PORT,
