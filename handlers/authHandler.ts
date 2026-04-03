@@ -25,6 +25,16 @@ export const authHandler = {
 		}),
 
 	/**
+	 * Login by email only (passwordless) — sends verification email
+	 */
+	loginByEmail: async (req: AuthenticatedRequest, params: RouteParams) =>
+		errorHandler(async () => {
+			const data = await req.json();
+			const result = await authService.loginByEmail(data.email, data.name);
+			return success({ data: result });
+		}),
+
+	/**
 	 * Admin Login handler
 	 */
 	adminLogin: async (req: AuthenticatedRequest, params: RouteParams) =>
@@ -85,7 +95,7 @@ export const authHandler = {
 		errorHandler(async () => {
 			const data = await req.json();
 			const result = await authService.verifyEmail(data);
-			return success(result);
+			return success({ data: result });
 		}),
 
 	/**
@@ -95,7 +105,7 @@ export const authHandler = {
 		errorHandler(async () => {
 			const data = await req.json();
 			const result = await authService.resendVerificationEmail(data);
-			return success(result);
+			return success({ data: result });
 		}),
 
 	/**
@@ -105,7 +115,7 @@ export const authHandler = {
 		errorHandler(async () => {
 			const data = await req.json();
 			const result = await authService.forgotPassword(data);
-			return success(result);
+			return success({ data: result });
 		}),
 
 	/**
@@ -115,7 +125,7 @@ export const authHandler = {
 		errorHandler(async () => {
 			const data = await req.json();
 			const result = await authService.resetPassword(data);
-			return success(result);
+			return success({ data: result });
 		}),
 
 	/**
@@ -129,7 +139,7 @@ export const authHandler = {
 
 			const data = await req.json();
 			const result = await authService.changePassword(req.user.id, data);
-			return success(result);
+			return success({ data: result });
 		}),
 
 	/**
@@ -143,7 +153,7 @@ export const authHandler = {
 
 			const data = await req.json();
 			const result = await authService.changeEmail(req.user.id, data);
-			return success(result);
+			return success({ data: result });
 		}),
 
 	/**
@@ -159,7 +169,7 @@ export const authHandler = {
 			// Extract newEmail from the request body
 			const { newEmail, ...tokenData } = data;
 			const result = await authService.verifyEmailChange(req.user.id, newEmail, tokenData);
-			return success(result);
+			return success({ data: result });
 		}),
 
 	/**

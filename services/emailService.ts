@@ -4,7 +4,6 @@ import justFetch from '@/lib/fetch/justFetch';
 import { makeHash } from '@/lib/security/hash';
 // import sgMail from '@sendgrid/mail';
 import { spawn } from 'bun';
-import { toBool } from 'diginext-utils/object';
 import { v4 } from 'uuid';
 
 interface SendEmailOptions {
@@ -146,6 +145,51 @@ export const emailService = {
 			console.log(`Verification email sent to ${email}`);
 		} catch (error) {
 			throw new Error(`sendVerificationEmail failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+		}
+	},
+
+	/**
+	 * Send magic-link login email
+	 */
+	async sendLoginEmail(email: string, token: string) {
+		try {
+			const loginUrl = appConfig.getWebappUrl(`/login?token=${token}`);
+
+			if (isLocal) {
+				console.log(`[DEV] Login email for ${email} with token: ${token}`);
+				console.log(loginUrl);
+				return;
+			}
+
+			await sendEmail({
+				to: email,
+				subject: 'Login to your account',
+				text: `Click this link to login: ${loginUrl}`,
+				html: `
+					<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+						<h1>Login to your account</h1>
+						<p>Click the button below to login. This link will expire in 15 minutes.</p>
+						<div style="margin: 30px 0;">
+							<a href="${loginUrl}"
+							   style="background-color: #007bff; color: white; padding: 12px 24px;
+							          text-decoration: none; border-radius: 4px; display: inline-block;">
+								Login Now
+							</a>
+						</div>
+						<p style="color: #666; font-size: 14px;">
+							Or copy and paste this link into your browser:<br>
+							<a href="${loginUrl}">${loginUrl}</a>
+						</p>
+						<p style="color: #999; font-size: 12px; margin-top: 40px;">
+							If you didn't request this login link, you can safely ignore this email.
+						</p>
+					</div>
+				`,
+			});
+
+			console.log(`Login email sent to ${email}`);
+		} catch (error) {
+			throw new Error(`sendLoginEmail failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
 		}
 	},
 

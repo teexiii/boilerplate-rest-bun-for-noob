@@ -100,6 +100,51 @@ export const authService = {
 	},
 
 	/**
+	 * Login by email only (passwordless)
+	 * Finds existing user or creates a new one, then sends verification email.
+	 * User completes login via POST /api/auth/check-token with the emailed token.
+	 */
+	async loginByEmail(email: string, name?: string): Promise<{ token: string; message: string }> {
+		if (!email) {
+			throw new Error('Email is required', { cause: 400 });
+		}
+
+		let user = await userRepo.findByEmail(email);
+
+		if (!user) {
+			// Auto-create user with default role
+			const defaultRole = await roleService.getRoleByName(AppRoleDefault.VIEWER);
+			if (!defaultRole) {
+				throw new Error('Please Try Again Later', { cause: 400 });
+			}
+
+			user = await userRepo.create({
+				email,
+				password: '', // No password for email-only login
+				name: name || email.split('@')[0],
+				roleId: defaultRole.id,
+			});
+		}
+
+		// Check rate limit (max 5 emails per hour)
+		const recentCount = await verificationTokenRepo.countRecentTokens(user.id, 'EMAIL_LOGIN', 60);
+		if (recentCount >= 5) {
+			throw new Error('Too many login emails sent. Please try again later.', { cause: 429 });
+		}
+
+		// Create login token and send login email
+		const token = await verificationTokenRepo.create(user.id, 'EMAIL_LOGIN');
+
+		// DO_NOT_AWAIT
+		emailService.sendLoginEmail(email, token);
+
+		return {
+			token,
+			message: 'Login link sent to your email',
+		};
+	},
+
+	/**
 	 * Refresh access token
 	 */
 	async refreshToken(input: TokenRefreshInput): Promise<{ accessToken: string; refreshToken: string }> {
@@ -175,7 +220,7 @@ export const authService = {
 		const user = await userService.getUserById(userId);
 
 		// DO_NOT_AWAIT
-		emailService.sendVerificationEmail(user.email, token);
+		if (user.email) emailService.sendVerificationEmail(user.email, token);
 
 		return {
 			token,
@@ -276,6 +321,10 @@ export const authService = {
 
 		const { user } = tokenDoc;
 
+		// Mark email as verified (fire-and-forget) + mark token as used
+		userRepo.markEmailAsVerified(user.id);
+		verificationTokenRepo.markAsUsed(token);
+
 		// Generate tokens
 		const accessToken = await generateAccessToken(user);
 		const refreshToken = await refreshTokenService.generateRefreshTokenByUser(user);
@@ -366,7 +415,7 @@ export const authService = {
 		// Invalid/expired tokens are handled by findValidToken
 		const token = await verificationTokenRepo.create(user.id, 'PASSWORD_RESET');
 
-		emailService.sendPasswordResetEmail(user.email, token);
+		if (user.email) emailService.sendPasswordResetEmail(user.email, token);
 
 		return {
 			token,

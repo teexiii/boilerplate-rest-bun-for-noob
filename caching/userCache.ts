@@ -195,7 +195,7 @@ export const userCache = {
 	/**
 	 * Clear specific user from cache (both by ID and email)
 	 */
-	async clear(id: string, email?: string): Promise<void> {
+	async clear(id: string, email?: string | null): Promise<void> {
 		try {
 			const promises: Promise<void>[] = [redis.del(this.formatKey(KEY_PREFIX.USER_BY_ID, id))];
 
@@ -240,7 +240,7 @@ export const userCache = {
 	/**
 	 * Invalidate user cache after update (clear the user and all lists)
 	 */
-	async invalidate(id: string, email?: string): Promise<void> {
+	async invalidate(id: string, email?: string | null): Promise<void> {
 		try {
 			await Promise.all([this.clear(id, email), this.clearLists()]);
 		} catch (error) {
