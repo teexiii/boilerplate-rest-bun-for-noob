@@ -190,3 +190,19 @@ Output format:
 - All dates handled with `dayjs` library
 - Logging with Pino (structured JSON logs)
 - Image processing available via Sharp library
+
+## Skill Files
+
+When working on specific areas, read the relevant skill file for detailed patterns:
+
+- **Repositories**: `.agent/skills/repositories/SKILL.md` - Raw SQL for reads, Prisma for writes, cache integration
+- **Types**: `.agent/skills/types/SKILL.md` - Extended Prisma types, input/response types, mapper functions
+- **Services**: `.agent/skills/services/SKILL.md` - Business logic, validation, error handling, cross-repo orchestration
+- **Handlers**: `.agent/skills/handlers/SKILL.md` - errorHandler(), request parsing, response formatting
+- **Routes**: `.agent/skills/routes/SKILL.md` - Route definitions, middleware stacking, parameter syntax
+- **Admin Routes**: `.agent/skills/admin-routes/SKILL.md` - Admin panel routes, shared middleware, entity patterns
+- **Caching**: `.agent/skills/caching/SKILL.md` - Redis patterns, TTL strategies, invalidation
+- **Swagger**: `.agent/skills/swagger/SKILL.md` - OpenAPI spec, Swagger UI serving, endpoint documentation
+- **Tests**: `.agent/skills/tests/SKILL.md` - Integration tests, server setup, test data patterns
+
+Always read CLAUDE.md first, then the relevant skill file for the area you're working on.

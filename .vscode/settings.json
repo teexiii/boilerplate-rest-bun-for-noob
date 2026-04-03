@@ -16,30 +16,27 @@
 		"*.scss": "postcss"
 	},
 	"workbench.colorCustomizations": {
-    "activityBar.activeBackground": "#6c0202",
-    "activityBar.background": "#6c0202",
+    "activityBar.activeBackground": "#779503",
+    "activityBar.background": "#779503",
     "activityBar.foreground": "#e7e7e7",
     "activityBar.inactiveForeground": "#e7e7e799",
-    "activityBarBadge.background": "#027d02",
-    "activityBarBadge.foreground": "#e7e7e7",
+    "activityBarBadge.background": "#63dcfc",
+    "activityBarBadge.foreground": "#15202b",
     "commandCenter.border": "#e7e7e799",
-    "sash.hoverBorder": "#6c0202",
-    "statusBar.background": "#3a0101",
+    "sash.hoverBorder": "#779503",
+    "statusBar.background": "#4f6302",
     "statusBar.foreground": "#e7e7e7",
-    "statusBarItem.hoverBackground": "#6c0202",
-    "statusBarItem.remoteBackground": "#3a0101",
+    "statusBarItem.hoverBackground": "#779503",
+    "statusBarItem.remoteBackground": "#4f6302",
     "statusBarItem.remoteForeground": "#e7e7e7",
-    "titleBar.activeBackground": "#3a0101",
+    "titleBar.activeBackground": "#4f6302",
     "titleBar.activeForeground": "#e7e7e7",
-    "titleBar.inactiveBackground": "#3a010199",
+    "titleBar.inactiveBackground": "#4f630299",
     "titleBar.inactiveForeground": "#e7e7e799"
   },
-	"peacock.color": "#3a0101",
+	"peacock.color": "#4f6302",
 	"[dockerfile]": {
 		"editor.defaultFormatter": "ms-azuretools.vscode-containers"
-	},
-	"[sql]": {
-		"editor.defaultFormatter": "cweijan.vscode-mysql-client2"
   },
   "prisma.pinToPrisma6": true
 }

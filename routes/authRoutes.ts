@@ -18,6 +18,12 @@ export const authRoutes: Route[] = [
 		handler: authHandler.login,
 	},
 	{
+		path: '/api/auth/login-by-email',
+		method: 'POST',
+		middleware: [requireHash],
+		handler: authHandler.loginByEmail,
+	},
+	{
 		path: '/api/auth/admin/login',
 		method: 'POST',
 		middleware: [requireHash],

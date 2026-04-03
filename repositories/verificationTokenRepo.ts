@@ -10,6 +10,7 @@ const TOKEN_EXPIRATION = {
 	EMAIL_VERIFICATION: 24 * 60 * 60 * 1000, // 24 hours
 	PASSWORD_RESET: 1 * 60 * 60 * 1000, // 1 hour
 	EMAIL_CHANGE: 1 * 60 * 60 * 1000, // 1 hour
+	EMAIL_LOGIN: 15 * 60 * 1000, // 15 minutes
 };
 
 export const verificationTokenRepo = {
@@ -18,6 +19,13 @@ export const verificationTokenRepo = {
 	 */
 	generateToken(): string {
 		return randomBytes(32).toString('hex');
+	},
+
+	/**
+	 * Generate a 6-digit OTP
+	 */
+	generateOtp(): string {
+		return Math.floor(100000 + Math.random() * 900000).toString();
 	},
 
 	/**
@@ -40,6 +48,28 @@ export const verificationTokenRepo = {
 		);
 
 		return verificationToken.token;
+	},
+
+	/**
+	 * Create a new OTP verification token (6-digit code)
+	 */
+	async createOtp(userId: string, type: VerificationTokenType, expiresIn?: number): Promise<string> {
+		const otp = this.generateOtp();
+		const expiration = expiresIn || TOKEN_EXPIRATION[type];
+		const expiresAt = new Date(Date.now() + expiration);
+
+		await queueWrite(() =>
+			db.verificationToken.create({
+				data: {
+					token: otp,
+					type,
+					userId,
+					expiresAt,
+				},
+			})
+		);
+
+		return otp;
 	},
 
 	/**

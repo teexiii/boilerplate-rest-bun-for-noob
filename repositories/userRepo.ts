@@ -223,6 +223,40 @@ export const userRepo = {
 	},
 
 	/**
+	 * Find user by phone
+	 */
+	async findByPhone(phone: string) {
+		const result = await db.$queryRaw<any[]>`
+			SELECT
+				u.id,
+				u.email,
+				u.phone,
+				u.name,
+				u.password,
+				u.image,
+				u.email_verified as "emailVerified",
+				u.email_verified_at as "emailVerifiedAt",
+				u.role_id as "roleId",
+				u.created_at as "createdAt",
+				u.updated_at as "updatedAt",
+				r.id as "role.id",
+				r.name as "role.name",
+				r.description as "role.description",
+				r.created_at as "role.createdAt",
+				r.updated_at as "role.updatedAt"
+			FROM users u
+			INNER JOIN roles r ON u.role_id = r.id
+			WHERE u.phone = ${phone}
+		`;
+
+		if (result.length === 0) return null;
+
+		const row = result[0];
+		const socials = await fetchSocials(row.id);
+		return mapRowToUser(row, socials);
+	},
+
+	/**
 	 * Search users by email (with caching)
 	 */
 	async search(query: string, options?: { limit?: number; offset?: number }) {

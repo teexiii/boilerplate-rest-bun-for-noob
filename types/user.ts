@@ -34,7 +34,7 @@ export interface UserUpdateInput {
 
 export interface UserResponse {
 	id: string;
-	email: string;
+	email?: string;
 	name: string | null;
 	image: string | null;
 	emailVerified: boolean;
@@ -53,7 +53,7 @@ export const toUserReponse = (user: UserSocials): UserResponse => {
 	try {
 		return {
 			id: user.id,
-			email: user.email,
+			...(user.email ? { email: user.email } : {}),
 			name: user.name || user.email,
 			image: user.image || user.image,
 			emailVerified: !!user.emailVerified,
