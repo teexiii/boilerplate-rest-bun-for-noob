@@ -14,10 +14,20 @@ import { initDb } from '@/lib/server/db';
 	// Setup Bun server
 	const server = Bun.serve({
 		port: appConfig.port,
-		idleTimeout: 60, // seconds - increased from default 10s for long-running operations
+		idleTimeout: 15, // seconds — reduced from 60s for API-only traffic
+		maxRequestBodySize: 10 * 1024 * 1024, // 10MB — prevents OOM from oversized payloads
 		async fetch(req: Request) {
 			// const url = new URL(req.url);
 			const method = req.method;
+
+			// Security headers applied to all responses
+			const securityHeaders = {
+				'X-Content-Type-Options': 'nosniff',
+				'X-Frame-Options': 'DENY',
+				'X-XSS-Protection': '1; mode=block',
+				'Referrer-Policy': 'strict-origin-when-cross-origin',
+				'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+			};
 
 			// Handle CORS preflight requests
 			if (method === 'OPTIONS') {
@@ -27,6 +37,7 @@ import { initDb } from '@/lib/server/db';
 						'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
 						'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 						'Access-Control-Max-Age': '86400', // 24 hours
+						...securityHeaders,
 					},
 				});
 			}

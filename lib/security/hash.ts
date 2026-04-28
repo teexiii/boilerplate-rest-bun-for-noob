@@ -8,7 +8,7 @@ const addPepper = (text: string | number) => {
 export function makeHash(text: string | number) {
 	//
 	try {
-		return crypto.createHash('md5').update(addPepper(text)).digest('hex');
+		return crypto.createHash('sha256').update(addPepper(text)).digest('hex');
 	} catch (error) {
 		throw new Error(`makeHash failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
 	}

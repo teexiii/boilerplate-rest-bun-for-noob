@@ -1,7 +1,12 @@
 import { authHandler } from '@/handlers/authHandler';
 import { authenticate } from '@/middleware/auth';
+import { rateLimitByIp } from '@/middleware/rateLimitMiddleware';
 import { requireHash } from '@/middleware/security';
 import type { Route } from '@/types/auth';
+
+// Pre-built rate limiters for auth endpoints
+const authRateLimit = rateLimitByIp(10, 60, 'auth'); // 10 req/min per IP
+const strictRateLimit = rateLimitByIp(5, 60, 'auth-strict'); // 5 req/min per IP
 
 export const authRoutes: Route[] = [
 	// Registration and Login
@@ -26,7 +31,7 @@ export const authRoutes: Route[] = [
 	{
 		path: '/api/auth/admin/login',
 		method: 'POST',
-		middleware: [requireHash],
+		middleware: [requireHash, strictRateLimit],
 		handler: authHandler.adminLogin,
 	},
 

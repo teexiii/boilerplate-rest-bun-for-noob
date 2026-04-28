@@ -19,7 +19,7 @@ export const v7s = (): string => {
 	const msecs = Date.now();
 
 	// Use a sequence counter with random initialization
-	const seq = Math.floor(Math.random() * 0x3fffffff);
+	const seq = crypto.getRandomValues(new Uint32Array(1))[0] & 0x3fffffff;
 
 	// // Timestamp (lower 24 bits of milliseconds)
 	buf[offset++] = (msecs / 0x10000000) & 0xff;

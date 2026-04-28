@@ -103,9 +103,7 @@ async function main() {
 		}
 		return existingUser;
 	};
-
 	const admin = await findOrCreateAdmin(env('ADMIN_EMAIL_DEFAULT', false));
-
 	console.log('Seed done');
 }
 

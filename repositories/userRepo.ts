@@ -1,6 +1,5 @@
 import { db } from '@/lib/server/db';
 import { queueWrite } from '@/repositories/helper';
-import { userCache } from '@/caching/userCache';
 import type { UserWithRole, UserCreateInput, UserUpdateInput } from '@/types/user';
 import type { Social } from '@prisma/client';
 
@@ -140,8 +139,8 @@ export const userRepo = {
 	 */
 	async findById(id: string) {
 		// // Try cache first
-		const cached = await userCache.getById(id);
-		if (cached) return cached;
+		// const cached = await userCache.getById(id);
+		// if (cached) return cached;
 
 		// Fallback to database - using raw SQL
 		const result = await db.$queryRaw<any[]>`
@@ -173,7 +172,7 @@ export const userRepo = {
 		const user = mapRowToUser(result[0], socials);
 
 		// Cache the result
-		await userCache.setById(id, user);
+		// await userCache.setById(id, user);
 
 		return user;
 	},
@@ -183,8 +182,8 @@ export const userRepo = {
 	 */
 	async findByEmail(email: string) {
 		// // Try cache first
-		const cached = await userCache.getByEmail(email);
-		if (cached) return cached;
+		// const cached = await userCache.getByEmail(email);
+		// if (cached) return cached;
 
 		// Fallback to database - using raw SQL
 		const result = await db.$queryRaw<any[]>`
@@ -217,7 +216,7 @@ export const userRepo = {
 		const user = mapRowToUser(row, socials);
 
 		// Cache the result (cache by both email and ID)
-		await Promise.all([userCache.setByEmail(email, user), userCache.setById(user.id, user)]);
+		// await Promise.all([userCache.setByEmail(email, user), userCache.setById(user.id, user)]);
 
 		return user;
 	},
@@ -263,9 +262,9 @@ export const userRepo = {
 		// Generate stable cache key from query and options
 		const cacheKey = `search:${query}:${options?.limit || 'all'}:${options?.offset || 0}`;
 
-		// Try cache first
-		const cached = await userCache.getList(cacheKey);
-		if (cached) return cached;
+		// // Try cache first
+		// const cached = await userCache.getList(cacheKey);
+		// if (cached) return cached;
 
 		// Check if query is UUID for exact match
 		const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -328,7 +327,7 @@ export const userRepo = {
 			`;
 
 		if (rows.length === 0) {
-			await userCache.setList(cacheKey, []);
+			// await userCache.setList(cacheKey, []);
 			return [];
 		}
 
@@ -337,7 +336,7 @@ export const userRepo = {
 		const users = mapRowsToUsers(rows, allSocials);
 
 		// Cache the result
-		await userCache.setList(cacheKey, users);
+		// await userCache.setList(cacheKey, users);
 
 		return users;
 	},
@@ -355,12 +354,12 @@ export const userRepo = {
 	 * Get all users (with caching)
 	 */
 	async findAll(options?: { limit?: number; offset?: number }) {
-		// Generate stable cache key from options
-		const cacheKey = `all:${options?.limit || 'all'}:${options?.offset || 0}`;
+		// // Generate stable cache key from options
+		// const cacheKey = `all:${options?.limit || 'all'}:${options?.offset || 0}`;
 
-		// Try cache first
-		const cached = await userCache.getList(cacheKey);
-		if (cached) return cached;
+		// // Try cache first
+		// const cached = await userCache.getList(cacheKey);
+		// if (cached) return cached;
 
 		// Fallback to database - using raw SQL
 		const rows = await db.$queryRaw<any[]>`
@@ -388,17 +387,17 @@ export const userRepo = {
 			OFFSET ${options?.offset || 0}
 		`;
 
-		if (rows.length === 0) {
-			await userCache.setList(cacheKey, []);
-			return [];
-		}
+		// if (rows.length === 0) {
+		// 	await userCache.setList(cacheKey, []);
+		// 	return [];
+		// }
 
 		const userIds = rows.map((row) => row.id);
 		const allSocials = await fetchManySocials(userIds);
 		const users = mapRowsToUsers(rows, allSocials);
 
 		// Cache the result
-		await userCache.setList(cacheKey, users);
+		// await userCache.setList(cacheKey, users);
 
 		return users;
 	},
@@ -421,8 +420,8 @@ export const userRepo = {
 			})
 		);
 
-		// Invalidate list caches since a new user was added
-		await userCache.clearLists();
+		// // Invalidate list caches since a new user was added
+		// await userCache.clearLists();
 
 		return user;
 	},
@@ -437,8 +436,8 @@ export const userRepo = {
 			include,
 		});
 
-		// Invalidate cache for this user and all lists
-		await Promise.all([userCache.invalidate(id, user.email)]);
+		// // Invalidate cache for this user and all lists
+		// await Promise.all([userCache.invalidate(id, user.email ?? undefined)]);
 
 		return user;
 	},
@@ -453,8 +452,8 @@ export const userRepo = {
 			include,
 		});
 
-		// Clear cache for this user (password change doesn't affect lists)
-		await userCache.clear(id, user.email);
+		// // Clear cache for this user (password change doesn't affect lists)
+		// await userCache.clear(id, user.email ?? undefined);
 
 		return user;
 	},
@@ -470,10 +469,10 @@ export const userRepo = {
 			where: { id },
 		});
 
-		// Invalidate cache for this user and all lists + home cache
-		if (user) {
-			await Promise.all([userCache.invalidate(id, user.email)]);
-		}
+		// // Invalidate cache for this user and all lists + home cache
+		// if (user) {
+		// 	await Promise.all([userCache.invalidate(id, user.email ?? undefined)]);
+		// }
 	},
 
 	/**
@@ -489,9 +488,9 @@ export const userRepo = {
 	 * Find users by role (with caching)
 	 */
 	async findByRoleId(roleId: string, options?: { limit?: number; offset?: number }): Promise<IUser[]> {
-		// Try cache first
-		const cached = await userCache.getByRole(roleId, options);
-		if (cached) return cached;
+		// // Try cache first
+		// const cached = await userCache.getByRole(roleId, options);
+		// if (cached) return cached;
 
 		// Fallback to database - using raw SQL
 		const rows = await db.$queryRaw<any[]>`
@@ -519,17 +518,17 @@ export const userRepo = {
 			OFFSET ${options?.offset || 0}
 		`;
 
-		if (rows.length === 0) {
-			await userCache.setByRole(roleId, [], options);
-			return [];
-		}
+		// if (rows.length === 0) {
+		// 	await userCache.setByRole(roleId, [], options);
+		// 	return [];
+		// }
 
 		const userIds = rows.map((row) => row.id);
 		const allSocials = await fetchManySocials(userIds);
 		const users = mapRowsToUsers(rows, allSocials);
 
-		// Cache the result
-		await userCache.setByRole(roleId, users, options);
+		// // Cache the result
+		// await userCache.setByRole(roleId, users, options);
 
 		return users;
 	},
@@ -547,8 +546,8 @@ export const userRepo = {
 			include,
 		});
 
-		// Clear cache for this user (verification status change doesn't affect lists)
-		await userCache.clear(id, user.email);
+		// // Clear cache for this user (verification status change doesn't affect lists)
+		// await userCache.clear(id, user.email ?? undefined);
 
 		return user;
 	},
@@ -570,14 +569,14 @@ export const userRepo = {
 			include,
 		});
 
-		// Clear cache for both old and new email, and all lists
-		if (oldUser) {
-			await Promise.all([
-				userCache.clear(id, oldUser.email), // Clear old email cache
-				userCache.clear(id, user.email), // Clear new email cache
-				userCache.clearLists(), // Email change might affect search results
-			]);
-		}
+		// // Clear cache for both old and new email, and all lists
+		// if (oldUser) {
+		// 	await Promise.all([
+		// 		userCache.clear(id, oldUser.email ?? undefined), // Clear old email cache
+		// 		userCache.clear(id, user.email ?? undefined), // Clear new email cache
+		// 		userCache.clearLists(), // Email change might affect search results
+		// 	]);
+		// }
 
 		return user;
 	},
@@ -586,7 +585,7 @@ export const userRepo = {
 	 * Create a new user with social login
 	 */
 	async createWithSocial(data: {
-		email: string;
+		email?: string | null;
 		name?: string | null;
 		roleId: string;
 		emailVerified: boolean;
@@ -619,8 +618,8 @@ export const userRepo = {
 			})
 		);
 
-		// Invalidate list caches since a new user was added
-		await userCache.clearLists();
+		// // Invalidate list caches since a new user was added
+		// await userCache.clearLists();
 
 		return user;
 	},

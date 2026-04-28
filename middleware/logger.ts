@@ -1,3 +1,4 @@
+import { isLocal } from '@/config';
 import { logger } from '@/lib/logger';
 import type { AuthenticatedRequest, RouteParams } from '@/types/auth';
 
@@ -11,6 +12,8 @@ function generateRequestId(): string {
 
 export const requestLogger = async (req: AuthenticatedRequest, params: RouteParams): Promise<Response | null> => {
 	// Use fast timestamp-based ID instead of crypto.randomUUID
+	if (isLocal) return null;
+
 	if (req.url.includes('/hz')) {
 		return null;
 	}
@@ -30,18 +33,26 @@ export const requestLogger = async (req: AuthenticatedRequest, params: RoutePara
 	};
 
 	// Log request
-	req.log.info({
-		type: 'request',
-		method: req.method,
-		url: req.url,
-		userId: req.user?.id,
-		params,
-	});
+	// req.log.info({
+	// 	type: 'request',
+	// 	method: req.method,
+	// 	url: req.url,
+	// 	userId: req.user?.id,
+	// 	params,
+	// });
 
 	// Add end logging to request
 	req.logEnd = (statusCode: number, error?: any) => {
 		const duration = Date.now() - start;
 		if (error) {
+			req.log?.info({
+				type: 'request',
+				method: req.method,
+				url: req.url,
+				userId: req.user?.id,
+				params,
+			});
+
 			req.log?.error({
 				type: 'response',
 				statusCode,
@@ -53,11 +64,11 @@ export const requestLogger = async (req: AuthenticatedRequest, params: RoutePara
 				},
 			});
 		} else {
-			req.log?.info({
-				type: 'response',
-				statusCode,
-				duration,
-			});
+			// req.log?.info({
+			// 	type: 'response',
+			// 	statusCode,
+			// 	duration,
+			// });
 		}
 	};
 

@@ -78,6 +78,19 @@ const appConfig = {
 		return `${env('BASE_URL', true, '')}${url}`;
 	},
 
+	cloudflare: {
+		accountId: env('CF_R2_ACCOUNT_ID'),
+		accessKeyId: env('CF_R2_ACCESS_KEY_ID'),
+		secretAccessKey: env('CF_R2_SECRET_ACCESS_KEY'),
+		bucketName: env('CF_R2_BUCKET_NAME'),
+		publicUrl: env('CF_R2_PUBLIC_URL'),
+		getUploadDir(url = '') {
+			const YYYYMMDD = dayjs().format('YY/MM/DD/HH/mm');
+			url = appConfig.normalize(url);
+			return `${env('UPFILE_BEST_UPLOAD_DIR_PATH', false)}/upload/${YYYYMMDD}${url}`.slice(1);
+		},
+	},
+
 	upfileBest: {
 		getUploadUrl(url = '') {
 			url = appConfig.normalize(url);

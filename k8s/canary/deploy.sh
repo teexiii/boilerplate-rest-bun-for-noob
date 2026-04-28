@@ -1,0 +1,1 @@
+dp Dockerfile.canary canary && rs namespace-name bun-api

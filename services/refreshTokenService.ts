@@ -3,6 +3,7 @@ import { generateRefreshToken } from '@/lib/auth/jwt';
 import { timeToMs } from '@/lib/auth/jwt/time';
 import { refreshTokenRepo } from '@/repositories/refreshTokenRepo';
 import type { UserWithRole } from '@/types/user';
+import { v4 } from 'uuid';
 
 export const refreshTokenService = {
 	async generateRefreshTokenByUser(user: Pick<UserWithRole, 'id'>) {
@@ -10,9 +11,9 @@ export const refreshTokenService = {
 			const expiration = timeToMs(appConfig.jwt.refreshTokenExpiresIn);
 			const expiresAt = new Date(Date.now() + expiration);
 
-			// Create record first — let Prisma auto-generate UUID
+			// Create record with unique placeholder — avoids unique constraint collision under concurrency
 			const record = await refreshTokenRepo.create({
-				token: '_pending_',
+				token: `_pending_${v4()}`,
 				expiresAt,
 				userId: user.id,
 			});

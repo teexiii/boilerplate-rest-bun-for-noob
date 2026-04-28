@@ -186,15 +186,11 @@ const zaloProvider: SocialProviderHandler = {
 			headers: { access_token: accessToken },
 		});
 
-		console.log('id,name,picture,email');
-
 		if (!profileResponse.ok) {
 			throw new Error(`Zalo API error: ${profileResponse.statusText}`, { cause: 401 });
 		}
 
 		const profileData = await profileResponse.json();
-
-		console.log(`profileData :>> `, profileData);
 
 		if (profileData.error) {
 			throw new Error(`Zalo profile error: ${profileData.message || profileData.error}`, { cause: 401 });

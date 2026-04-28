@@ -1,8 +1,8 @@
 import { fail400, fail401, fail500, success } from '@/lib/response';
 import { errorHandler } from '@/middleware/error';
+import { getClientIp } from '@/middleware/extractIp';
 import { authService } from '@/services/authService';
 import type { AuthenticatedRequest, RouteParams } from '@/types/auth';
-import { userCache } from '@/caching/userCache';
 
 export const authHandler = {
 	/**
@@ -63,11 +63,6 @@ export const authHandler = {
 			const data = await req.json();
 			await authService.logout(data.refreshToken);
 
-			// Clear user cache if authenticated
-			if (req.user) {
-				await userCache.clear(req.user.id, req.user.email);
-			}
-
 			return success({ message: 'Logged out successfully' });
 		}),
 
@@ -81,9 +76,6 @@ export const authHandler = {
 			}
 
 			await authService.logoutAll(req.user.id);
-
-			// Clear user cache
-			await userCache.clear(req.user.id, req.user.email);
 
 			return success({ message: 'Logged out from all devices' });
 		}),

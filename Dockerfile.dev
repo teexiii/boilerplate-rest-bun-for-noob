@@ -23,7 +23,6 @@ WORKDIR /usr/app
 # Copy dependencies from deps stage
 COPY --chown=runner:nodejs --from=deps /app/node_modules ./node_modules
 COPY --chown=runner:nodejs . .
-COPY --chown=runner:nodejs ./.env.dev ./.env
 
 # Switch to non-root runner
 USER runner

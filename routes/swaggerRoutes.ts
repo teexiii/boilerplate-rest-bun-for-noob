@@ -1,36 +1,35 @@
-import { fail404, success } from '@/lib/response';
+import appConfig from '@/config/appConfig';
+import { serveSwaggerJson, serveSwaggerStatic, serveSwaggerUi } from '@/swagger';
 import { errorHandler } from '@/middleware/error';
 import type { AuthenticatedRequest, Route, RouteParams } from '@/types/auth';
 
-export const defaultRoutes: Route[] = [
+export const swaggerRoutes: Route[] = [
+	// Swagger UI
 	{
-		path: '/',
+		path: '/api/docs',
 		method: 'GET',
 		handler: async (req: AuthenticatedRequest, params: RouteParams) =>
 			errorHandler(async () => {
-				return new Response('', {
-					status: 200,
-					headers: {
-						'Access-Control-Allow-Origin': '*',
-						'Access-Control-Allow-Methods': 'GET',
-					},
-				});
+				const baseUrl = appConfig.getBaseUrl();
+				return serveSwaggerUi(baseUrl);
 			}),
 	},
+	// OpenAPI spec JSON
 	{
-		path: '/api/hz',
+		path: '/api/docs/swagger.json',
 		method: 'GET',
 		handler: async (req: AuthenticatedRequest, params: RouteParams) =>
 			errorHandler(async () => {
-				return success({ data: 1 });
+				return serveSwaggerJson();
 			}),
 	},
+	// Static assets (CSS, JS)
 	{
-		path: '/hz',
+		path: '/api/docs/:filename',
 		method: 'GET',
 		handler: async (req: AuthenticatedRequest, params: RouteParams) =>
 			errorHandler(async () => {
-				return success({ data: 1 });
+				return serveSwaggerStatic(params.filename);
 			}),
 	},
 ];
