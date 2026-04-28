@@ -1,4 +1,4 @@
-import justFetch from '@/lib/fetch/justFetch';
+import justFetch, { fetchFail, fetchSuccess } from '@/lib/fetch/justFetch';
 import { getFileExtension, getFileNameWithoutExtension } from 'diginext-utils/string';
 import mime from 'mime';
 import { makeSlug } from 'diginext-utils/makeSlug';
@@ -6,6 +6,8 @@ import { v7s } from '@/lib/utils/uuid';
 import { v7 } from 'uuid';
 import appConfig from '@/config/appConfig';
 import type { FetchResponse } from '@/lib/fetch/type';
+import { isLocal } from '@/config';
+import { uploadToR2 } from '@/lib/cloudflare/r2-upload-service';
 
 // ============================================================================
 // Types
@@ -13,6 +15,7 @@ import type { FetchResponse } from '@/lib/fetch/type';
 
 export interface IUpfileBest {
 	id: string;
+	url: string;
 	name: string;
 	path: string;
 	size: string;
@@ -76,19 +79,41 @@ const uploadToServer = async ({
 }: UploadRequest): Promise<FetchResponse<IUpfileBest>> => {
 	'use server';
 
-	return await justFetch<IUpfileBest>({
-		method: 'POST',
-		path: appConfig.upfileBest.getUploadUrl('/api/upload/stream'),
-		data: buffer,
-		timeout: 1000 * 60 * 10,
-		headers: {
-			'Content-Disposition': `attachment; filename="${fileName}"`,
-			'Content-Length': `${buffer.length}`,
-			'Content-Type': mimeType,
-			'upf-base-dir': appConfig.upfileBest.getUploadDir(dir),
-			'token-api': process.env.UPFILE_BEST_TOKEN_API!,
-		},
-	});
+	if (isLocal) {
+		const res = await justFetch<IUpfileBest>({
+			method: 'POST',
+			path: appConfig.upfileBest.getUploadUrl('/api/upload/stream'),
+			data: buffer,
+			timeout: 1000 * 60 * 10,
+			headers: {
+				'Content-Disposition': `attachment; filename="${fileName}"`,
+				'Content-Length': `${buffer.length}`,
+				'Content-Type': mimeType,
+				'upf-base-dir': appConfig.upfileBest.getUploadDir(dir),
+				'token-api': process.env.UPFILE_BEST_TOKEN_API!,
+			},
+		});
+
+		if (res.status) res.data.url = appConfig.upfileBest.getCdn(res.data!.path);
+		return res;
+	} else {
+		const r2Key = appConfig.cloudflare.getUploadDir(fileName);
+		const r2Result = await uploadToR2(buffer, r2Key, mimeType);
+		if (!r2Result.url) {
+			return fetchFail({ message: 'upload failed' });
+		}
+		return fetchSuccess({
+			id: r2Result.key,
+			name: fileName,
+			url: r2Result.url,
+			path: r2Result.key,
+			size: `${buffer.length}`,
+			mimeType,
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString(),
+			storageSpaceId: '',
+		});
+	}
 };
 
 // ============================================================================

@@ -8,7 +8,6 @@ const accessTokenSecret = new TextEncoder().encode(appConfig.jwt.accessTokenSecr
 const refreshTokenSecret = new TextEncoder().encode(appConfig.jwt.refreshTokenSecret);
 
 export async function generateAccessToken(user: Pick<UserWithRole, 'id' | 'roleId' | 'role'>): Promise<string> {
-	console.log(user?.role);
 	const payload: TokenPayload = {
 		userId: user.id,
 		roleId: user.roleId,

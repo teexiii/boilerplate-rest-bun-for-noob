@@ -1,6 +1,5 @@
 import { db } from '@/lib/server/db';
 import { queueWrite } from '@/repositories/helper';
-import { userCache } from '@/caching/userCache';
 import type { RoleCreateInput, RoleUpdateInput } from '@/types/role';
 
 export const roleRepo = {
@@ -61,9 +60,6 @@ export const roleRepo = {
 			})
 		);
 
-		// Invalidate all user caches (users include role data)
-		await userCache.clearAll();
-
 		return role;
 	},
 
@@ -74,9 +70,6 @@ export const roleRepo = {
 		const role = await db.role.delete({
 			where: { id },
 		});
-
-		// Invalidate all user caches (users include role data)
-		await userCache.clearAll();
 
 		return role;
 	},

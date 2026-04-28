@@ -27,8 +27,8 @@ export default async function justFetch<T>({
 			'Content-Type': contentType,
 			...headers,
 		},
-		maxBodyLength: Infinity,
-		maxContentLength: Infinity,
+		// maxBodyLength: Infinity,
+		// maxContentLength: Infinity,
 	};
 
 	try {

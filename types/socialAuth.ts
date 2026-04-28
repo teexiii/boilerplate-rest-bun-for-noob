@@ -10,7 +10,7 @@ export enum SocialProvider {
 
 export interface SocialProfile {
 	id: string;
-	email: string;
+	email?: string | null;
 	name?: string;
 	provider: SocialProvider;
 	providerId: string;

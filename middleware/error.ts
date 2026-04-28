@@ -1,6 +1,6 @@
 import { fail400, fail } from '@/lib/response';
 
-export async function errorHandler<Args extends any[], Return>(fn: (...args: Args) => Promise<Return> | Return) {
+export function errorHandler<Args extends any[], Return>(fn: (...args: Args) => Promise<Return> | Return) {
 	return async (...args: Args): Promise<Return | Response> => {
 		try {
 			return await fn(...args);
@@ -19,7 +19,7 @@ export async function errorHandler<Args extends any[], Return>(fn: (...args: Arg
 				if (error.code) {
 					// Handle Prisma errors
 					if (error.code === 'P2002') {
-						return fail('Unique constraint failed: ' + error.meta?.target, 409);
+						return fail('A record with this value already exists', 409);
 					}
 					if (error.code === 'P2025') {
 						return fail('Record not found', 404);

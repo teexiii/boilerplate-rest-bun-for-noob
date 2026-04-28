@@ -47,7 +47,7 @@ export const errorLoggerService = {
 			const apiUrl = getApiUrl();
 			if (!apiUrl) return; // Not configured, skip silently
 
-			const body: ErrorLogCreateInput = { message, trace, project: pkg.name };
+			const body: ErrorLogCreateInput = { message, trace, project: `[${env('ENV')}]${pkg.name}` };
 			const payload = JSON.stringify(body);
 			const hash = generateHash();
 

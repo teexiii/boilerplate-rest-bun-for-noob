@@ -101,7 +101,8 @@ web_modules/
 # dotenv environment variable files
 
 .env
-.env*local
+.env.*
+!.env.example
 
 # parcel-bundler cache (https://parceljs.org/)
 
@@ -181,6 +182,10 @@ claude.cmd
 claude.ps1
 
 .claude*
+.opencode
+.agent
+plans
+release-manifest.json
 
 prisma/backups
 

@@ -10,9 +10,10 @@ declare global {
 // ============================================
 const DB_CONFIG = {
 	// Connection pool settings - adjust based on your DB server limits
-	// Formula: (number of server instances) × connectionLimit < DB max_connections
-	connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '50', 10),
-	poolTimeout: parseInt(process.env.DB_POOL_TIMEOUT || '10', 10),
+	// Formula: (number of pods) × connectionLimit < DB max_connections
+	// e.g. 30 pods × 5 = 150 < 200 (PostgreSQL max_connections)
+	connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '5', 10),
+	poolTimeout: parseInt(process.env.DB_POOL_TIMEOUT || '30', 10),
 
 	// Retry settings for connection failures
 	maxRetries: parseInt(process.env.DB_MAX_RETRIES || '3', 10),
@@ -106,7 +107,7 @@ async function createPrismaClient(): Promise<PrismaClient> {
 		async () => {
 			await client.$connect();
 			// Verify with a simple query
-			await client.$executeRawUnsafe('SELECT 1');
+			await client.$executeRaw`SELECT 1`;
 		},
 		'Database connection',
 		DB_CONFIG.maxRetries
@@ -149,7 +150,7 @@ function setupShutdownHandler(client: PrismaClient): void {
 export async function checkDbHealth(): Promise<{ healthy: boolean; latencyMs: number }> {
 	const start = performance.now();
 	try {
-		await db.$executeRawUnsafe('SELECT 1');
+		await db.$executeRaw`SELECT 1`;
 		return {
 			healthy: true,
 			latencyMs: Math.round(performance.now() - start),

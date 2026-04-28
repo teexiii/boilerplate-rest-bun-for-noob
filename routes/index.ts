@@ -3,6 +3,7 @@ import { defaultRoutes } from '@/routes/defaultRoutes';
 import { oauthCallbackRoutes } from '@/routes/oauthCallbackRoutes';
 import { roleRoutes } from '@/routes/roleRoutes';
 import { socialAuthRoutes } from '@/routes/socialAuthRoutes';
+import { swaggerRoutes } from '@/routes/swaggerRoutes';
 import { userRoutes } from '@/routes/userRoutes';
 import type { Route } from '@/types/auth';
 
@@ -10,6 +11,7 @@ import type { Route } from '@/types/auth';
 export const routes: Route[] = [
 	//
 	...defaultRoutes,
+	...swaggerRoutes,
 	...authRoutes,
 	...userRoutes,
 	...roleRoutes,

@@ -1,4 +1,4 @@
-import { isProd } from '@/config';
+import { isLocal, isProd } from '@/config';
 import dayjs from 'dayjs';
 import { errorLoggerService } from '@/services/errorLoggerService';
 import '@/config';
@@ -109,7 +109,7 @@ function createLogEntry(level: LogLevel, args: unknown[]): LogEntry {
  * Output log in production format (JSON) or development format (pretty)
  */
 function writeLog(level: LogLevel, args: unknown[]): void {
-	if (isProd) {
+	if (!isLocal) {
 		// Production: structured JSON for log aggregation (CloudWatch, Datadog, etc.)
 		const entry = createLogEntry(level, args);
 		const json = JSON.stringify(entry);

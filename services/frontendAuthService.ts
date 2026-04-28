@@ -64,7 +64,7 @@ export const frontendAuthService = {
 	generateState(provider: SocialProvider): string {
 		const state = {
 			provider,
-			nonce: Math.random().toString(36).substring(2, 15),
+			nonce: crypto.randomUUID(),
 			timestamp: Date.now(),
 		};
 

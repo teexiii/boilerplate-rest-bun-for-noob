@@ -1,6 +1,5 @@
 import { db } from '@/lib/server/db';
 import { queueWrite } from '@/repositories/helper';
-import { userCache } from '@/caching/userCache';
 import type { UserSocials } from '@/types';
 import type { Social } from '@prisma/client';
 
@@ -118,9 +117,6 @@ export const socialRepo = {
 			})
 		);
 
-		// Invalidate parent user cache (user includes socials)
-		await userCache.invalidate(data.userId);
-
 		return social;
 	},
 
@@ -143,9 +139,6 @@ export const socialRepo = {
 				provider,
 			},
 		});
-
-		// Invalidate parent user cache (user includes socials)
-		await userCache.invalidate(userId);
 	},
 
 	/**

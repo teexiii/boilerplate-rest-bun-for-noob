@@ -112,6 +112,8 @@ interface WriteTask<T> {
  * Returns a Promise so you still get the result
  * Use when you need to limit concurrent writes but still need results
  */
+const MAX_WRITE_QUEUE_SIZE = 500;
+
 export const writeQueue: QueueObject<WriteTask<any>> = queue(async (task: WriteTask<any>) => {
 	try {
 		const result = await task.fn();
@@ -122,10 +124,13 @@ export const writeQueue: QueueObject<WriteTask<any>> = queue(async (task: WriteT
 }, 20); // Lower concurrency for writes
 
 /**
- * Execute a write operation through the rate-limited queue
- * Still returns the result, just rate-limited
+ * Execute a write operation through the rate-limited queue.
+ * Rejects with 503 if queue is full to prevent unbounded memory growth.
  */
 export function queueWrite<T>(fn: () => Promise<T>): Promise<T> {
+	if (writeQueue.length() >= MAX_WRITE_QUEUE_SIZE) {
+		return Promise.reject(new Error('Server overloaded, please try again later'));
+	}
 	return new Promise((resolve, reject) => {
 		writeQueue.push({ fn, resolve, reject });
 	});
